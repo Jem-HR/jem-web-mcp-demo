@@ -8,8 +8,8 @@
   --jem-white: #ffffff;
   --jem-border: #e9ddd0;
   --jem-muted: #64717a;
-  --jem-success: #287d5d;
-  --jem-warning: #a65d00;
+  --jem-success: #236c51;
+  --jem-warning: #925100;
   --jem-danger: #b33c52;
   --font-heading: "Inter", system-ui, sans-serif;
   --font-body: "Manrope", "Inter", system-ui, sans-serif;
@@ -24,6 +24,6 @@
   --radius-md: 0.875rem;
   --radius-lg: 1.25rem;
   --radius-pill: 999px;
-  --focus-ring: 0 0 0 3px rgb(255 105 127 / 38%);
+  --focus-ring: 0 0 0 4px var(--jem-navy);
   --shadow-card: 0 1rem 2.5rem rgb(6 33 51 / 10%);
 }

@@ -69,7 +69,7 @@ function CheckLabel({
       <dt>{children}</dt>
       <dd>
         <StatusBadge tone={passed ? "success" : "warning"}>
-          {passed ? "Yes" : "Needs review"}
+          {passed ? "Yes" : "No"}
         </StatusBadge>
       </dd>
     </div>
@@ -165,7 +165,7 @@ function ValidationCard({ validation }: { validation: OpportunityValidation }) {
         </CheckLabel>
         <CheckLabel passed={validation.dataFresh}>Data fresh</CheckLabel>
         <CheckLabel passed={validation.fairnessPassed}>
-          Fairness review needed
+          Fairness passed
         </CheckLabel>
         <CheckLabel passed={validation.budgetWithinLimit}>
           Budget within limit

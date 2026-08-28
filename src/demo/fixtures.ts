@@ -78,7 +78,7 @@ export function createInitialDemoState(): DemoState {
       shifts: [
         createShift(
           "shift-mon-rosebank",
-          "2026-09-01",
+          "2026-08-31",
           "08:00",
           "17:00",
           "Rosebank Mall",
@@ -92,7 +92,7 @@ export function createInitialDemoState(): DemoState {
         ),
         createShift(
           "shift-tue-rosebank",
-          "2026-09-02",
+          "2026-09-01",
           "08:00",
           "17:00",
           "Rosebank Mall",
@@ -106,7 +106,7 @@ export function createInitialDemoState(): DemoState {
         ),
         createShift(
           "shift-wed-rosebank",
-          "2026-09-03",
+          "2026-09-02",
           "08:00",
           "17:00",
           "Rosebank Mall",
@@ -120,7 +120,7 @@ export function createInitialDemoState(): DemoState {
         ),
         createShift(
           "shift-fri-rosebank",
-          "2026-09-05",
+          "2026-09-04",
           "08:00",
           "17:00",
           "Rosebank Mall",
@@ -134,7 +134,7 @@ export function createInitialDemoState(): DemoState {
         ),
         createShift(
           "shift-sat-rosebank",
-          "2026-09-06",
+          "2026-09-05",
           "08:00",
           "17:00",
           "Rosebank Mall",
@@ -148,7 +148,7 @@ export function createInitialDemoState(): DemoState {
         ),
         createShift(
           "shift-thu-sandton",
-          "2026-09-04",
+          "2026-09-03",
           "14:00",
           "21:00",
           "Sandton City",
@@ -162,7 +162,7 @@ export function createInitialDemoState(): DemoState {
         ),
         createShift(
           "shift-sun-rosebank",
-          "2026-09-07",
+          "2026-09-06",
           "09:00",
           "15:00",
           "Rosebank Mall",

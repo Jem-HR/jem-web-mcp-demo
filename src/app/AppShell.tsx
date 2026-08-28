@@ -12,7 +12,7 @@ export function AppShell() {
   const capabilities = useDemoCapabilities();
   const tools = useMemo(() => createWebMcpTools(capabilities), [capabilities]);
   const webMcpStatus = useWebMcpStatus(tools);
-  const activity = useDemoSelector((state) => state.activity?.message ?? "");
+  const activity = useDemoSelector((state) => state.activity);
   const mode = useDemoSelector((state) => state.mode);
   const onboardingComplete = useDemoSelector(
     (state) => state.onboarding.completed,
@@ -34,7 +34,9 @@ export function AppShell() {
         className="visually-hidden"
         role="status"
       >
-        {activity}
+        {activity
+          ? `${activity.source === "webmcp" ? "WebMCP" : "In app"}: ${activity.message}`
+          : ""}
       </div>
     </div>
   );

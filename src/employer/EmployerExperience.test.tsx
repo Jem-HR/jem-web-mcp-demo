@@ -326,9 +326,10 @@ describe("EmployerExperience", () => {
     expect(within(validation).getByText("Rules clear")).toBeInTheDocument();
     expect(within(validation).getByText("Data available")).toBeInTheDocument();
     expect(within(validation).getByText("Data fresh")).toBeInTheDocument();
-    expect(
-      within(validation).getByText("Fairness review needed"),
-    ).toBeInTheDocument();
+    const fairness =
+      within(validation).getByText("Fairness passed").parentElement;
+    expect(fairness).not.toBeNull();
+    expect(within(fairness!).getByText("No")).toBeInTheDocument();
     expect(within(validation).getByText("412")).toBeInTheDocument();
     expect(within(validation).getByText("68%")).toBeInTheDocument();
     expect(within(validation).getByText(/R\s*70\s*040/)).toBeInTheDocument();
@@ -336,6 +337,30 @@ describe("EmployerExperience", () => {
     expect(
       within(validation).getByText(/3 fairness exceptions/i),
     ).toBeInTheDocument();
+  });
+
+  it("presents a passing fairness result with direct yes semantics", () => {
+    const initial = createInitialDemoState();
+    const store = createDemoStore({
+      ...initial,
+      mode: "employer",
+      employer: { ...initial.employer, fairnessExceptions: [] },
+    });
+    renderEmployerStore(store);
+    openOpportunityBuilder();
+    previewDraft();
+    fireEvent.click(screen.getByRole("button", { name: /save draft/i }));
+    fireEvent.click(
+      screen.getByRole("button", { name: /validate programme/i }),
+    );
+
+    const validation = screen.getByRole("region", {
+      name: /programme validation/i,
+    });
+    const fairness =
+      within(validation).getByText("Fairness passed").parentElement;
+    expect(fairness).not.toBeNull();
+    expect(within(fairness!).getByText("Yes")).toBeInTheDocument();
   });
 
   it("shows recovery for an insufficient budget without false readiness", () => {
@@ -412,7 +437,7 @@ describe("EmployerExperience", () => {
       expect(tab).toHaveClass("tabs__tab");
     });
 
-    const narrowMediaStart = featuresCss.indexOf("@media (max-width: 38rem)");
+    const narrowMediaStart = featuresCss.indexOf("@media (max-width: 47.5rem)");
     const nextMediaStart = featuresCss.indexOf("@media", narrowMediaStart + 1);
     const narrowCss = featuresCss
       .slice(

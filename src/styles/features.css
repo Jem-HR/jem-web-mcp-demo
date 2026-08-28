@@ -30,7 +30,7 @@
   padding: 0 var(--space-2);
   border-radius: var(--radius-pill);
   background: var(--jem-pink);
-  color: var(--jem-white);
+  color: var(--jem-navy);
   font-family: var(--font-heading);
   font-size: 1rem;
   font-weight: 700;
@@ -308,6 +308,7 @@
   display: flex;
   align-items: center;
   gap: var(--space-2);
+  min-height: 44px;
   font-weight: 600;
 }
 
@@ -453,6 +454,7 @@
   display: flex;
   align-items: center;
   gap: var(--space-2);
+  min-height: 44px;
   font-size: 0.9rem;
   font-weight: 600;
 }
@@ -468,7 +470,23 @@
   justify-content: flex-end;
 }
 
-@media (max-width: 38rem) {
+@media (max-width: 47.5rem) {
+  .app-header {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .app-header__mode-switcher,
+  .app-header__meta {
+    min-width: 0;
+    max-width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .app-header__meta {
+    margin-inline-start: auto;
+  }
+
   .onboarding-flow__profile dl,
   .onboarding-flow__summary dl,
   .feature-form__fields--two-columns {
@@ -508,6 +526,7 @@
   .employer-experience__tabs .tabs__list {
     overflow-x: auto;
     overscroll-behavior-inline: contain;
+    scroll-padding-inline: var(--space-2);
   }
 
   .employee-experience__tabs .tabs__tab {
@@ -517,9 +536,13 @@
   .employer-experience__tabs .tabs__tab {
     flex: 0 0 auto;
   }
+
+  .dialog--viewport-constrained {
+    max-height: calc(100dvh - 2rem);
+  }
 }
 
-@media (min-width: 38.01rem) and (max-width: 56rem) {
+@media (min-width: 47.51rem) and (max-width: 56rem) {
   .employee-summary-grid,
   .employee-card-grid,
   .employer-metric-grid,

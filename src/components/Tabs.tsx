@@ -1,4 +1,4 @@
-import type { KeyboardEvent, ReactNode } from "react";
+import { useId, type KeyboardEvent, type ReactNode } from "react";
 
 export interface TabDefinition {
   id: string;
@@ -21,7 +21,8 @@ function identifier(value: string): string {
 }
 
 export function Tabs({ ariaLabel, onSelect, selectedId, tabs }: TabsProps) {
-  const baseId = identifier(ariaLabel);
+  const instanceId = useId();
+  const baseId = `${instanceId}-${identifier(ariaLabel)}`;
   const selectedTab = tabs.find((tab) => tab.id === selectedId);
 
   function tabId(tab: TabDefinition) {
@@ -72,17 +73,21 @@ export function Tabs({ ariaLabel, onSelect, selectedId, tabs }: TabsProps) {
           </button>
         ))}
       </div>
-      {selectedTab ? (
-        <div
-          aria-labelledby={tabId(selectedTab)}
-          className="tabs__panel"
-          id={panelId(selectedTab)}
-          role="tabpanel"
-          tabIndex={0}
-        >
-          {selectedTab.panel}
-        </div>
-      ) : null}
+      {selectedTab
+        ? tabs.map((tab) => (
+            <div
+              aria-labelledby={tabId(tab)}
+              className="tabs__panel"
+              hidden={tab.id !== selectedId}
+              id={panelId(tab)}
+              key={tab.id}
+              role="tabpanel"
+              tabIndex={tab.id === selectedId ? 0 : -1}
+            >
+              {tab.id === selectedId ? tab.panel : null}
+            </div>
+          ))
+        : null}
     </div>
   );
 }

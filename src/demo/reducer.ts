@@ -73,7 +73,7 @@ export function demoReducer(state: DemoState, action: DemoAction): DemoState {
       return {
         ...state,
         employee: { ...state.employee, goal: copyGoal(action.goal) },
-        activity: activityFor(state, action.source, "Updated savings goal."),
+        activity: activityFor(state, action.source, "Savings goal updated."),
       };
 
     case "employee/replace-expenses":

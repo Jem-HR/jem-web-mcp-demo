@@ -109,7 +109,7 @@ describe("EmployeeExperience", () => {
       expect(tab).toHaveClass("tabs__tab");
     });
 
-    const narrowMediaStart = featuresCss.indexOf("@media (max-width: 38rem)");
+    const narrowMediaStart = featuresCss.indexOf("@media (max-width: 47.5rem)");
     const nextMediaStart = featuresCss.indexOf("@media", narrowMediaStart + 1);
     const narrowCss = featuresCss
       .slice(
@@ -138,7 +138,7 @@ describe("EmployeeExperience", () => {
     fireEvent.click(screen.getByRole("tab", { name: "Shifts" }));
     fireEvent.click(
       screen.getByRole("button", {
-        name: /request saturday rosebank shift/i,
+        name: /request saturday sales floor shift at rosebank mall/i,
       }),
     );
 
@@ -175,7 +175,7 @@ describe("EmployeeExperience", () => {
     fireEvent.click(screen.getByRole("tab", { name: "Shifts" }));
     fireEvent.click(
       screen.getByRole("button", {
-        name: /request saturday rosebank shift/i,
+        name: /request saturday sales floor shift at rosebank mall/i,
       }),
     );
     fireEvent.click(screen.getByRole("button", { name: /^confirm request$/i }));

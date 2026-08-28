@@ -21,13 +21,12 @@ export function ProgressRing({
   return (
     <div className="progress-ring">
       <svg
-        aria-label={label}
+        aria-label={`${label}: ${Math.round(visualPercentage)}%`}
         height={size}
         role="img"
         viewBox={`0 0 ${size} ${size}`}
         width={size}
       >
-        <title>{label}</title>
         <circle
           className="progress-ring__track"
           cx={size / 2}

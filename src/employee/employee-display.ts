@@ -16,15 +16,15 @@ const months = [
   "Dec",
 ] as const;
 
-const dayNames: Record<string, string> = {
-  mon: "Monday",
-  tue: "Tuesday",
-  wed: "Wednesday",
-  thu: "Thursday",
-  fri: "Friday",
-  sat: "Saturday",
-  sun: "Sunday",
-};
+const dayNames = [
+  "Sunday",
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday",
+  "Saturday",
+] as const;
 
 export function formatEmployeeCurrency(amount: number): string {
   return formatCurrency(amount).replace(/^R\s*/, "R");
@@ -54,13 +54,14 @@ export function shiftDuration(shift: Pick<Shift, "startTime" | "endTime">) {
   return `${minutes / 60} hours`;
 }
 
-export function shiftRequestLabel(shift: Pick<Shift, "id" | "site">): string {
-  const [, dayToken, siteToken] = shift.id.split("-");
-  const day = dayNames[dayToken ?? ""];
-  const site = siteToken
-    ? `${siteToken.charAt(0).toUpperCase()}${siteToken.slice(1)}`
-    : shift.site;
-  return `Request ${day ?? "available"} ${site} shift`;
+export function shiftRequestLabel(
+  shift: Pick<Shift, "date" | "role" | "site">,
+): string {
+  const date = new Date(`${shift.date}T00:00:00.000Z`);
+  const day = Number.isNaN(date.getTime())
+    ? "available"
+    : dayNames[date.getUTCDay()];
+  return `Request ${day} ${shift.role} shift at ${shift.site}`;
 }
 
 export function destinationLabel(destination: RewardDestination): string {

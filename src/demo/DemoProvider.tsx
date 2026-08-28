@@ -1,6 +1,7 @@
 import {
   createContext,
   useContext,
+  useEffect,
   useMemo,
   useState,
   useSyncExternalStore,
@@ -17,15 +18,21 @@ const missingProviderMessage = "DemoProvider is required.";
 
 export interface DemoProviderProps extends PropsWithChildren {
   store?: DemoStore;
+  exposeCapabilities?: (capabilities: DemoCapabilities) => void;
 }
 
 export function DemoProvider({
   children,
+  exposeCapabilities,
   store: providedStore,
 }: DemoProviderProps) {
   const [store] = useState<DemoStore>(() => providedStore ?? createDemoStore());
 
   const capabilities = useMemo(() => createDemoCapabilities(store), [store]);
+
+  useEffect(() => {
+    exposeCapabilities?.(capabilities);
+  }, [capabilities, exposeCapabilities]);
 
   return (
     <StoreContext.Provider value={store}>
