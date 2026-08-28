@@ -109,7 +109,7 @@ export function Dialog({
       <div
         aria-labelledby={headingId}
         aria-modal="true"
-        className="dialog"
+        className="dialog dialog--viewport-constrained"
         ref={dialogRef}
         role="dialog"
       >
@@ -125,7 +125,9 @@ export function Dialog({
             ×
           </button>
         </header>
-        <div className="dialog__content">{children}</div>
+        <div className="dialog__content dialog__content--scrollable">
+          {children}
+        </div>
         {footer ? <footer className="dialog__footer">{footer}</footer> : null}
       </div>
     </div>

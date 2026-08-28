@@ -1,7 +1,11 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 
+import { DemoProvider } from "../demo/DemoProvider";
+import { createInitialDemoState } from "../demo/fixtures";
+import { createDemoStore } from "../demo/store";
 import { App } from "./App";
+import { AppShell } from "./AppShell";
 
 function setModelContext(modelContext: WebMCP.ModelContext | undefined) {
   Object.defineProperty(document, "modelContext", {
@@ -40,5 +44,32 @@ describe("App", () => {
       "true",
     );
     expect(screen.getByText("Nomsa Dlamini")).toBeInTheDocument();
+  });
+
+  it("renders one main landmark in completed and onboarding modes", () => {
+    const completedStore = createDemoStore();
+    const onboardingState = createInitialDemoState();
+    const onboardingStore = createDemoStore({
+      ...onboardingState,
+      onboarding: { completed: false, step: 1 },
+    });
+
+    const completedView = render(
+      <DemoProvider store={completedStore}>
+        <AppShell />
+      </DemoProvider>,
+    );
+    expect(screen.getAllByRole("main")).toHaveLength(1);
+
+    completedView.unmount();
+    render(
+      <DemoProvider store={onboardingStore}>
+        <AppShell />
+      </DemoProvider>,
+    );
+    expect(
+      screen.getByRole("heading", { name: /confirm your employment details/i }),
+    ).toBeInTheDocument();
+    expect(screen.getAllByRole("main")).toHaveLength(1);
   });
 });

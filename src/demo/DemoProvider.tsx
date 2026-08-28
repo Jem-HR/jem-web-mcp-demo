@@ -15,8 +15,15 @@ const StoreContext = createContext<DemoStore | null>(null);
 const CapabilitiesContext = createContext<DemoCapabilities | null>(null);
 const missingProviderMessage = "DemoProvider is required.";
 
-export function DemoProvider({ children }: PropsWithChildren) {
-  const [store] = useState<DemoStore>(createDemoStore);
+export interface DemoProviderProps extends PropsWithChildren {
+  store?: DemoStore;
+}
+
+export function DemoProvider({
+  children,
+  store: providedStore,
+}: DemoProviderProps) {
+  const [store] = useState<DemoStore>(() => providedStore ?? createDemoStore());
 
   const capabilities = useMemo(() => createDemoCapabilities(store), [store]);
 

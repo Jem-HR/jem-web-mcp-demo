@@ -18,10 +18,10 @@ export function AppShell() {
     dashboard.employeeName.split(" ")[0] ?? dashboard.employeeName;
 
   return (
-    <main className="app-shell">
+    <div className="app-shell">
       <AppHeader webMcpStatus={webMcpStatus} />
       {onboardingComplete ? (
-        <section
+        <main
           aria-labelledby="employee-summary-title"
           className="app-shell__content"
         >
@@ -44,7 +44,7 @@ export function AppShell() {
               percentage={dashboard.goalProgress.percentage}
             />
           </Card>
-        </section>
+        </main>
       ) : (
         <OnboardingFlow />
       )}
@@ -56,6 +56,6 @@ export function AppShell() {
       >
         {activity}
       </div>
-    </main>
+    </div>
   );
 }

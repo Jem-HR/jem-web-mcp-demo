@@ -128,4 +128,19 @@ describe("Dialog", () => {
     fireEvent.keyDown(document, { key: "Tab", shiftKey: true });
     expect(last).toHaveFocus();
   });
+
+  it("marks dialog content for viewport-constrained scrolling", () => {
+    render(
+      <Dialog open title="Edit goal" onClose={() => undefined}>
+        <p>Long editable content</p>
+      </Dialog>,
+    );
+
+    expect(screen.getByRole("dialog")).toHaveClass(
+      "dialog--viewport-constrained",
+    );
+    expect(screen.getByText("Long editable content").parentElement).toHaveClass(
+      "dialog__content--scrollable",
+    );
+  });
 });

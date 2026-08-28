@@ -131,6 +131,12 @@
   box-shadow: var(--shadow-card);
 }
 
+.dialog--viewport-constrained {
+  display: flex;
+  max-height: calc(100dvh - 2rem);
+  flex-direction: column;
+}
+
 .dialog__header,
 .dialog__footer {
   display: flex;
@@ -161,6 +167,8 @@
 }
 
 .dialog__content {
+  min-height: 0;
+  overflow-y: auto;
   padding: var(--space-5);
 }
 
