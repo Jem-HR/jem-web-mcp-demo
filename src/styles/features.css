@@ -121,12 +121,15 @@
 }
 
 .employee-experience__header,
-.employee-panel__header {
+.employee-panel__header,
+.employer-experience__header,
+.employer-panel__header {
   max-width: 44rem;
   margin-bottom: var(--space-5);
 }
 
-.employee-experience__header h1 {
+.employee-experience__header h1,
+.employer-experience__header h1 {
   margin-bottom: var(--space-2);
   font-size: clamp(2.25rem, 6vw, 4rem);
   line-height: 1;
@@ -134,38 +137,49 @@
 
 .employee-experience__header > p:last-child,
 .employee-panel__header p,
-.employee-card__muted {
+.employee-card__muted,
+.employer-experience__header > p:last-child,
+.employer-panel__header p,
+.employer-card__muted {
   color: var(--jem-muted);
 }
 
-.employee-experience__tabs {
+.employee-experience__tabs,
+.employer-experience__tabs {
   min-width: 0;
   max-width: 100%;
 }
 
 .employee-overview,
-.employee-panel {
+.employee-panel,
+.employer-panel {
   display: grid;
   gap: var(--space-6);
 }
 
 .employee-summary-grid,
-.employee-card-grid {
+.employee-card-grid,
+.employer-metric-grid,
+.employer-card-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: var(--space-4);
 }
 
-.employee-card-grid {
+.employee-card-grid,
+.employer-card-grid {
   margin-top: var(--space-4);
 }
 
-.employee-card {
+.employee-card,
+.employer-card {
   padding: var(--space-5);
 }
 
 .employee-card h2,
-.employee-card h3 {
+.employee-card h3,
+.employer-card h2,
+.employer-card h3 {
   margin-bottom: var(--space-2);
 }
 
@@ -181,7 +195,8 @@
   background: linear-gradient(135deg, var(--jem-white), var(--jem-pink-light));
 }
 
-.employee-card__heading-row {
+.employee-card__heading-row,
+.employer-card__heading-row {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
@@ -193,24 +208,77 @@
   font-weight: 700;
 }
 
-.employee-details {
+.employee-details,
+.employer-details {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--space-4);
   margin: var(--space-4) 0;
 }
 
-.employee-details dt {
+.employee-details dt,
+.employer-details dt {
   margin-bottom: var(--space-1);
   color: var(--jem-muted);
   font-size: 0.78rem;
 }
 
-.employee-details dd {
+.employee-details dd,
+.employer-details dd {
   margin: 0;
   font-family: var(--font-heading);
   font-size: 0.9rem;
   font-weight: 600;
+}
+
+.employer-metric-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.employer-metric h2 {
+  font-size: clamp(1.75rem, 4vw, 2.5rem);
+}
+
+.employer-metric p:last-child {
+  margin-bottom: 0;
+  color: var(--jem-muted);
+}
+
+.employer-section {
+  margin-top: var(--space-2);
+}
+
+.employer-details--wide {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.employer-rules ul,
+.opportunity-validation__issues ul {
+  display: grid;
+  gap: var(--space-2);
+  margin-bottom: 0;
+  padding-left: var(--space-5);
+}
+
+.opportunity-builder__form-card,
+.opportunity-preview,
+.opportunity-validation {
+  border-color: var(--jem-pink);
+}
+
+.opportunity-preview,
+.opportunity-validation {
+  background: linear-gradient(135deg, var(--jem-white), var(--jem-pink-light));
+}
+
+.opportunity-validation__issues {
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--jem-border);
+}
+
+.opportunity-validation__issues h4 {
+  margin: 0;
+  font-family: var(--font-heading);
 }
 
 .employee-panel section + section {
@@ -360,7 +428,9 @@
   font-weight: 600;
 }
 
-.feature-form__field input {
+.feature-form__field input,
+.feature-form__field select,
+.feature-form__field textarea {
   width: 100%;
   min-height: 2.75rem;
   padding: 0.5rem 0.65rem;
@@ -369,6 +439,14 @@
   background: var(--jem-white);
   color: var(--jem-navy);
   font: inherit;
+}
+
+.feature-form__field textarea {
+  resize: vertical;
+}
+
+.feature-form__field--wide {
+  grid-column: 1 / -1;
 }
 
 .feature-form__check {
@@ -399,18 +477,25 @@
 
   .employee-summary-grid,
   .employee-card-grid,
-  .employee-details {
+  .employee-details,
+  .employer-metric-grid,
+  .employer-card-grid,
+  .employer-details,
+  .employer-details--wide {
     grid-template-columns: 1fr;
   }
 
   .employee-card--goal,
-  .employee-card__heading-row {
+  .employee-card__heading-row,
+  .employer-card__heading-row {
     align-items: flex-start;
     flex-direction: column;
   }
 
   .employee-experience__tabs .tabs,
-  .employee-experience__tabs .tabs__list {
+  .employee-experience__tabs .tabs__list,
+  .employer-experience__tabs .tabs,
+  .employer-experience__tabs .tabs__list {
     min-width: 0;
     max-width: 100%;
   }
@@ -420,14 +505,25 @@
     overscroll-behavior-inline: contain;
   }
 
+  .employer-experience__tabs .tabs__list {
+    overflow-x: auto;
+    overscroll-behavior-inline: contain;
+  }
+
   .employee-experience__tabs .tabs__tab {
+    flex: 0 0 auto;
+  }
+
+  .employer-experience__tabs .tabs__tab {
     flex: 0 0 auto;
   }
 }
 
 @media (min-width: 38.01rem) and (max-width: 56rem) {
   .employee-summary-grid,
-  .employee-card-grid {
+  .employee-card-grid,
+  .employer-metric-grid,
+  .employer-card-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
