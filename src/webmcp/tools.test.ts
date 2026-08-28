@@ -18,8 +18,8 @@ describe("getAppStatusTool", () => {
 
   it("returns structured, verifiable application status", async () => {
     await expect(getAppStatusTool.execute({})).resolves.toEqual({
-      name: "Jem WebMCP Demo",
-      phase: "foundation",
+      name: "Jem Unlocked",
+      phase: "prototype",
       webMcpReady: true,
     });
   });

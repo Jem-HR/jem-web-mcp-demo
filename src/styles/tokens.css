@@ -1,0 +1,29 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700&family=Manrope:wght@300;400;500;600&display=swap");
+
+:root {
+  --jem-cream: #fff7ec;
+  --jem-navy: #062133;
+  --jem-pink: #ff697f;
+  --jem-pink-light: #ffe3e8;
+  --jem-white: #ffffff;
+  --jem-border: #e9ddd0;
+  --jem-muted: #64717a;
+  --jem-success: #287d5d;
+  --jem-warning: #a65d00;
+  --jem-danger: #b33c52;
+  --font-heading: "Inter", system-ui, sans-serif;
+  --font-body: "Manrope", "Inter", system-ui, sans-serif;
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+  --space-8: 3rem;
+  --radius-sm: 0.5rem;
+  --radius-md: 0.875rem;
+  --radius-lg: 1.25rem;
+  --radius-pill: 999px;
+  --focus-ring: 0 0 0 3px rgb(255 105 127 / 38%);
+  --shadow-card: 0 1rem 2.5rem rgb(6 33 51 / 10%);
+}

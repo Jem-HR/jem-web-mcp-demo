@@ -1,13 +1,13 @@
 export interface AppStatus {
-  name: "Jem WebMCP Demo";
-  phase: "foundation";
+  name: "Jem Unlocked";
+  phase: "prototype";
   webMcpReady: true;
 }
 
 export function getAppStatus(): AppStatus {
   return {
-    name: "Jem WebMCP Demo",
-    phase: "foundation",
+    name: "Jem Unlocked",
+    phase: "prototype",
     webMcpReady: true,
   };
 }
