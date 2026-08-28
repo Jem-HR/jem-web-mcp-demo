@@ -124,6 +124,10 @@ function isPositiveMoney(value: unknown): value is number {
   return typeof value === "number" && Number.isFinite(value) && value > 0;
 }
 
+function isActionSource(value: unknown): value is ActionSource {
+  return value === "ui" || value === "webmcp";
+}
+
 function isProgrammeFilter(value: unknown): value is ProgrammeFilter {
   return value === "all" || value === "active" || value === "draft";
 }
@@ -331,6 +335,13 @@ export function createEmployerCapabilities(
           "Provide every required field, valid dates, and positive budget values.",
         );
       }
+      if (!isActionSource(source)) {
+        return errorResult(
+          "INVALID_INPUT",
+          "Enter a valid action source.",
+          "Use ui or webmcp.",
+        );
+      }
 
       const draft = createDraft(input);
       if (!input.confirm) {
@@ -347,6 +358,13 @@ export function createEmployerCapabilities(
           "INVALID_INPUT",
           "Enter a valid opportunity draft ID.",
           "Provide the active draft ID.",
+        );
+      }
+      if (!isActionSource(source)) {
+        return errorResult(
+          "INVALID_INPUT",
+          "Enter a valid action source.",
+          "Use ui or webmcp.",
         );
       }
 

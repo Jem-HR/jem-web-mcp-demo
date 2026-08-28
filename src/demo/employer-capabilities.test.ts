@@ -112,6 +112,20 @@ describe("employer capabilities", () => {
     expect(store.getState().activity).toBeNull();
   });
 
+  it("rejects an invalid draft source without dispatching", () => {
+    const store = createDemoStore();
+    const capabilities = createEmployerCapabilities(store);
+
+    expect(
+      capabilities.createOpportunityDraft(
+        { ...validDraft, confirm: true },
+        "automation" as never,
+      ),
+    ).toMatchObject({ ok: false, error: { code: "INVALID_INPUT" } });
+    expect(store.getState().employer.activeDraft).toBeNull();
+    expect(store.getState().activity).toBeNull();
+  });
+
   it("validates fairness and blocks a budget below maximum exposure", () => {
     const store = createDemoStore();
     const capabilities = createEmployerCapabilities(store);
@@ -161,5 +175,21 @@ describe("employer capabilities", () => {
     expect(
       capabilities.validateOpportunity({ draftId: "missing" }),
     ).toMatchObject({ ok: false, error: { code: "NOT_FOUND" } });
+  });
+
+  it("rejects an invalid validation source without dispatching", () => {
+    const store = createDemoStore();
+    const capabilities = createEmployerCapabilities(store);
+    capabilities.createOpportunityDraft({ ...validDraft, confirm: true });
+    const priorActivity = store.getState().activity;
+
+    expect(
+      capabilities.validateOpportunity(
+        { draftId: "draft-opportunity" },
+        "automation" as never,
+      ),
+    ).toMatchObject({ ok: false, error: { code: "INVALID_INPUT" } });
+    expect(store.getState().employer.validation).toBeNull();
+    expect(store.getState().activity).toBe(priorActivity);
   });
 });
