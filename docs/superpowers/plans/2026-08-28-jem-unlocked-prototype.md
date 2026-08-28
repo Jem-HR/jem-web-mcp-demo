@@ -1766,7 +1766,7 @@ git add README.md docs/challenge-demo-script.md docs/superpowers/plans/2026-08-2
 git commit -m "docs: prepare the Jem Unlocked challenge demo"
 ```
 
-- [ ] **Step 6: Request final code review and address findings**
+- [x] **Step 6: Request final code review and address findings**
 
 Use `superpowers:requesting-code-review` for the whole branch from the pre-prototype commit `a48ab8a^` through `HEAD`. Fix every confirmed correctness, privacy, accessibility, WebMCP-contract, or maintainability finding, rerun `mise exec node@22.23.2 -- npm run check`, and commit fixes separately.
 
