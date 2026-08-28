@@ -2,7 +2,7 @@
 
 Use this deterministic six-beat story in ChatGPT’s in-app Browser or Chrome with `chrome://flags/#enable-webmcp-testing` enabled. Start with a page refresh for the known completed Nomsa dashboard. If the session has changed, use **Reset demo** instead: it restores fixtures and opens onboarding step 1, so complete onboarding before starting this script. Nothing persists after refresh.
 
-For every consequential tool, first show the `confirm: false` preview, ask the user for an explicit confirmation, and make the identical call with `confirm: true` only after they agree. Point out the visible activity announcement and updated UI after each confirmed action.
+For every consequential tool, first show the `confirm: false` preview, ask the user for an explicit confirmation, and make the identical call with `confirm: true` only after they agree. Each confirmed action updates the UI and sends a persistent screen-reader announcement through the global activity region.
 
 ## 1. Read Nomsa’s dashboard
 
@@ -29,7 +29,7 @@ Show the preview for the Rosebank Mall shift on 5 September 2026, with estimated
 request_shift({ "shiftId": "shift-sat-rosebank", "confirm": true })
 ```
 
-Point out that the shift becomes **Requested** and that the activity message changes. It is a request, not a shift assignment.
+Point out that the shift becomes **Requested**. The global activity region announces the change to screen-reader users. It is a request, not a shift assignment.
 
 ## 3. Allocate an earned reward
 
@@ -45,7 +45,7 @@ Show the R150 preview and ask: “Would you like me to allocate this earned rewa
 allocate_reward({ "rewardId": "reward-safety", "destination": "savings", "confirm": true })
 ```
 
-Point out that the allocation is visible, the goal total becomes R2,670, and the activity message is updated. This is demo state only; it does not issue a reward or move money.
+Return to **Overview**. Point out the R2,670 goal total, 45% savings progress, and the visible **Recent activity** card. The global activity region also announces the allocation to screen-reader users. This is demo state only; it does not issue a reward or move money.
 
 ## 4. Switch to employer metrics
 

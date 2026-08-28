@@ -132,6 +132,107 @@ describe("App integration", () => {
     expect("demoCapabilities" in window).toBe(false);
   });
 
+  it("renders persisted WebMCP opportunity draft and validation state in Employer Hub", async () => {
+    let capabilities: DemoCapabilities | null = null;
+    render(
+      <DemoProvider
+        exposeCapabilities={(value) => {
+          capabilities = value;
+        }}
+      >
+        <AppShell />
+      </DemoProvider>,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Employer Hub" }));
+    fireEvent.click(screen.getByRole("tab", { name: "Create Opportunity" }));
+
+    expect(
+      screen.queryByRole("region", { name: "Saved opportunity draft" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("region", { name: "Programme validation" }),
+    ).not.toBeInTheDocument();
+
+    const createDraft = toolByName(capabilities!, "create_opportunity_draft");
+    const validateDraft = toolByName(capabilities!, "validate_opportunity");
+    const draftInput = {
+      name: "October Reliability Reward",
+      type: "attendance",
+      outcome: "Reward on-time attendance during October",
+      eligibleSegment: "Rosebank retail employees",
+      qualificationRule: "Arrive on time for every confirmed October shift",
+      startDate: "2026-10-01",
+      endDate: "2026-10-31",
+      rewardType: "cash",
+      rewardAmount: 250,
+      totalBudget: 105000,
+      maxPerEmployee: 250,
+      exceptionPolicy:
+        "Approved leave and employer roster changes enter review",
+      confirm: false,
+    };
+
+    await act(async () => {
+      await expect(executeTool(createDraft, draftInput)).resolves.toMatchObject(
+        {
+          ok: true,
+          status: "preview",
+        },
+      );
+    });
+
+    expect(
+      screen.queryByRole("region", { name: "Saved opportunity draft" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("region", { name: "Programme validation" }),
+    ).not.toBeInTheDocument();
+
+    await act(async () => {
+      await expect(
+        executeTool(createDraft, { ...draftInput, confirm: true }),
+      ).resolves.toMatchObject({ ok: true, status: "applied" });
+    });
+
+    const savedDraft = screen.getByRole("region", {
+      name: "Saved opportunity draft",
+    });
+    for (const value of [
+      draftInput.name,
+      draftInput.type,
+      draftInput.outcome,
+      draftInput.exceptionPolicy,
+      `${draftInput.startDate} to ${draftInput.endDate}`,
+    ]) {
+      expect(within(savedDraft).getByText(value)).toBeInTheDocument();
+    }
+    expect(within(savedDraft).getByText(/R\s*250 cash/i)).toBeInTheDocument();
+    expect(within(savedDraft).getByText(/R\s*105\s*000/)).toBeInTheDocument();
+    expect(within(savedDraft).getAllByText(/R\s*250/)).toHaveLength(2);
+    expect(
+      screen.getByRole("status", { name: "Latest activity" }),
+    ).toHaveTextContent("WebMCP: Saved opportunity draft.");
+    expect(screen.queryByText("School Fees")).not.toBeInTheDocument();
+    expect(screen.queryByText(/R\s*2\s*520/)).not.toBeInTheDocument();
+
+    await act(async () => {
+      await expect(
+        executeTool(validateDraft, { draftId: "draft-opportunity" }),
+      ).resolves.toMatchObject({ ok: true, status: "applied" });
+    });
+
+    const validation = screen.getByRole("region", {
+      name: "Programme validation",
+    });
+    expect(within(validation).getByText("Review required")).toBeInTheDocument();
+    const fairness =
+      within(validation).getByText("Fairness passed").parentElement;
+    expect(fairness).not.toBeNull();
+    expect(within(fairness!).getByText("No")).toBeInTheDocument();
+    expect(within(validation).getByText("3 unresolved")).toBeInTheDocument();
+  });
+
   it("supports wrapping arrow, Home, and End tab navigation with selection following focus", () => {
     render(<App />);
     const overview = screen.getByRole("tab", { name: "Overview" });

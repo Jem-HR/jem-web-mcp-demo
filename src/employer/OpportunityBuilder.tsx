@@ -4,7 +4,7 @@ import { Button } from "../components/Button";
 import { Card } from "../components/Card";
 import { StatusBadge } from "../components/StatusBadge";
 import { formatCurrency, formatPercentage } from "../components/format";
-import { useDemoCapabilities } from "../demo/DemoProvider";
+import { useDemoCapabilities, useDemoSelector } from "../demo/DemoProvider";
 import type { CreateOpportunityDraftInput } from "../demo/employer-capabilities";
 import type { OpportunityDraft, OpportunityValidation } from "../demo/types";
 
@@ -139,6 +139,60 @@ function DraftPreviewCard({ preview }: { preview: DraftPreview }) {
   );
 }
 
+function SavedDraftCard({ draft }: { draft: OpportunityDraft }) {
+  return (
+    <Card
+      aria-label="Saved opportunity draft"
+      as="section"
+      className="employer-card opportunity-saved-draft"
+      role="region"
+    >
+      <div className="employer-card__heading-row">
+        <div>
+          <p className="eyebrow">Saved draft</p>
+          <h3>{draft.name}</h3>
+        </div>
+        <StatusBadge tone="neutral">Draft</StatusBadge>
+      </div>
+      <p>Saved programme draft. Validate its current rules and budget.</p>
+      <dl className="employer-details employer-details--wide">
+        <div>
+          <dt>Type</dt>
+          <dd>{draft.type}</dd>
+        </div>
+        <div>
+          <dt>Outcome</dt>
+          <dd>{draft.outcome}</dd>
+        </div>
+        <div>
+          <dt>Dates</dt>
+          <dd>
+            {draft.startDate} to {draft.endDate}
+          </dd>
+        </div>
+        <div>
+          <dt>Reward</dt>
+          <dd>
+            {formatCurrency(draft.rewardAmount)} {draft.rewardType}
+          </dd>
+        </div>
+        <div>
+          <dt>Total budget</dt>
+          <dd>{formatCurrency(draft.totalBudget)}</dd>
+        </div>
+        <div>
+          <dt>Maximum per employee</dt>
+          <dd>{formatCurrency(draft.maxPerEmployee)}</dd>
+        </div>
+        <div>
+          <dt>Exception policy</dt>
+          <dd>{draft.exceptionPolicy}</dd>
+        </div>
+      </dl>
+    </Card>
+  );
+}
+
 export function OpportunityValidationCard({
   validation,
 }: {
@@ -205,14 +259,10 @@ export function OpportunityValidationCard({
 
 export function OpportunityBuilder() {
   const capabilities = useDemoCapabilities();
+  const activeDraft = useDemoSelector((state) => state.employer.activeDraft);
+  const validation = useDemoSelector((state) => state.employer.validation);
   const [draft, setDraft] = useState<DraftValues>(initialDraft);
   const [preview, setPreview] = useState<DraftPreview | null>(null);
-  const [savedDraftId, setSavedDraftId] = useState<
-    OpportunityDraft["id"] | null
-  >(null);
-  const [validation, setValidation] = useState<OpportunityValidation | null>(
-    null,
-  );
   const [recoveryMessage, setRecoveryMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
   const canSave = preview !== null && draftsMatch(draft, preview.input);
@@ -223,8 +273,6 @@ export function OpportunityBuilder() {
   ) {
     setDraft((current) => ({ ...current, [key]: value }));
     setPreview(null);
-    setSavedDraftId(null);
-    setValidation(null);
     setRecoveryMessage("");
     setSuccessMessage("");
   }
@@ -232,8 +280,6 @@ export function OpportunityBuilder() {
   function previewDraft() {
     setRecoveryMessage("");
     setSuccessMessage("");
-    setValidation(null);
-    setSavedDraftId(null);
     const snapshot = { ...draft };
     const result = capabilities.employer.createOpportunityDraft(
       { ...snapshot, confirm: false },
@@ -257,29 +303,25 @@ export function OpportunityBuilder() {
     if (!preview || !draftsMatch(draft, preview.input)) return;
     setRecoveryMessage("");
     setSuccessMessage("");
-    setValidation(null);
     const result = capabilities.employer.createOpportunityDraft(
       { ...preview.input, confirm: true },
       "ui",
     );
     if (!result.ok) {
-      setSavedDraftId(null);
       setRecoveryMessage(
         `We couldn’t save this draft. ${result.error.recovery}`,
       );
       return;
     }
-    setSavedDraftId(result.data.id);
     setSuccessMessage("Draft saved. You can now validate the programme.");
   }
 
   function validateDraft() {
-    if (!savedDraftId) return;
+    if (activeDraft === null) return;
     setRecoveryMessage("");
     setSuccessMessage("");
-    setValidation(null);
     const result = capabilities.employer.validateOpportunity(
-      { draftId: savedDraftId },
+      { draftId: activeDraft.id },
       "ui",
     );
     if (!result.ok) {
@@ -288,7 +330,6 @@ export function OpportunityBuilder() {
       );
       return;
     }
-    setValidation(result.data);
   }
 
   return (
@@ -448,7 +489,7 @@ export function OpportunityBuilder() {
               Save draft
             </Button>
             <Button
-              disabled={savedDraftId === null}
+              disabled={activeDraft === null}
               onClick={validateDraft}
               variant="navy"
             >
@@ -468,6 +509,7 @@ export function OpportunityBuilder() {
         </p>
       ) : null}
       {preview ? <DraftPreviewCard preview={preview} /> : null}
+      {activeDraft ? <SavedDraftCard draft={activeDraft} /> : null}
       {validation ? (
         <OpportunityValidationCard validation={validation} />
       ) : null}

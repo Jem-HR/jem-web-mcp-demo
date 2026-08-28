@@ -262,11 +262,13 @@
 
 .opportunity-builder__form-card,
 .opportunity-preview,
+.opportunity-saved-draft,
 .opportunity-validation {
   border-color: var(--jem-pink);
 }
 
 .opportunity-preview,
+.opportunity-saved-draft,
 .opportunity-validation {
   background: linear-gradient(135deg, var(--jem-white), var(--jem-pink-light));
 }
