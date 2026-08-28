@@ -67,4 +67,35 @@ describe("registerWebMcpTools", () => {
       });
     });
   });
+
+  it("contains earlier rejected registrations when a later registration throws", async () => {
+    const registerTool = vi.fn<WebMCP.ModelContext["registerTool"]>();
+    let rejectRegistration: (reason?: unknown) => void = () => undefined;
+    const rejectedRegistration = new Promise<void>((_resolve, reject) => {
+      rejectRegistration = reject;
+    });
+    const rejectedThen = vi.spyOn(rejectedRegistration, "then");
+    registerTool
+      .mockImplementationOnce(() => rejectedRegistration)
+      .mockImplementationOnce(() => {
+        throw new Error("second browser-internal detail");
+      });
+    const onStatus = vi.fn();
+
+    registerWebMcpTools(createModelContext(registerTool), onStatus, [
+      webMcpTools[0],
+      webMcpTools[0],
+    ]);
+
+    expect(onStatus).toHaveBeenLastCalledWith({
+      state: "error",
+      message: "WebMCP tool registration failed.",
+    });
+    expect(rejectedThen).toHaveBeenCalled();
+    rejectRegistration(new Error("first browser-internal detail"));
+    await vi.waitFor(() => {
+      expect(registerTool).toHaveBeenCalledTimes(2);
+    });
+    await new Promise((resolve) => setTimeout(resolve, 0));
+  });
 });

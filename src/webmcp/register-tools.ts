@@ -18,13 +18,16 @@ export function registerWebMcpTools(
   const controller = new AbortController();
   onStatus({ state: "registering" });
 
-  let registrations: Promise<void>[];
+  const registrations: Promise<void>[] = [];
 
   try {
-    registrations = tools.map((tool) =>
-      modelContext.registerTool(tool, { signal: controller.signal }),
-    );
+    for (const tool of tools) {
+      registrations.push(
+        modelContext.registerTool(tool, { signal: controller.signal }),
+      );
+    }
   } catch {
+    void Promise.allSettled(registrations);
     onStatus({ state: "error", message: REGISTRATION_ERROR });
     return () => controller.abort();
   }
