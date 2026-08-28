@@ -1745,7 +1745,7 @@ tsc --noEmit: PASS
 vite build: PASS
 ```
 
-- [ ] **Step 4: Run a production preview and browser walkthrough**
+- [x] **Step 4: Run a production preview and browser walkthrough**
 
 Run: `mise exec node@22.23.2 -- npm run dev -- --host 127.0.0.1`
 
