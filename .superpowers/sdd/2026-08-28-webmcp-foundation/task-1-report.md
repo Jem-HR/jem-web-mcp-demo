@@ -20,7 +20,7 @@ Status: DONE_WITH_CONCERNS
 
 ## Commits
 
-- Pending (git commit is blocked by the shared worktree index lock permissions).
+- `6f74911 chore: bootstrap React WebMCP app`
 
 ## Test commands and summaries
 
@@ -38,9 +38,9 @@ The required test command was run before `src/app/App.tsx` existed. It could not
 
 The neutral semantic shell, exact manifest versions, Vite/Vitest configuration, global stylesheet import, and required `.gitignore` safeguard are present. No unrelated source changes remain.
 
-## Concerns
+## Historical concerns from the initial attempt
 
-The brief's exact dependency versions are mutually incompatible with the mandated Node 20.19.2 runtime in this environment: npm requires legacy peer resolution, jsdom/undici require newer Node APIs, typescript-eslint rejects TypeScript 7, and the exact Testing Library/React types do not type-check. A maintainer should resolve the dependency matrix before claiming a clean check.
+The initial Node 20.19.2 run exposed incompatibilities in the original dependency matrix; these were resolved by the subsequent Node 22 / TypeScript 6 ruling below.
 
 ## Continuation (Node 22 / TypeScript 6 ruling)
 
@@ -49,4 +49,21 @@ The brief's exact dependency versions are mutually incompatible with the mandate
 - Green evidence: focused test passed (1 file, 1 test).
 - `npm run lint` passed; `npm run build` passed. `npm run format:check` reports only pre-existing README/spec-plan formatting differences.
 - Self-review: corrected `React.JSX.Element` typing and retained all brief-required files and ignore entries.
-- Commit remains pending because linked-worktree git index writes require escalated permission.
+- Commit: `6f74911 chore: bootstrap React WebMCP app`.
+
+## Final concerns
+
+`npm run format:check` reports only pre-existing formatting differences in `README.md` and the implementation plan. The focused test, lint, and build pass under the corrected Node 22.23.2 / TypeScript 6.0.3 setup.
+
+## Fix round 1
+
+Files changed: `src/main.tsx`, `src/app/App.tsx`, `src/styles.css`.
+
+- Moved the global stylesheet import to `src/main.tsx`.
+- Aligned the shell to `app-shell`/`app-card`, “OpenAI WebMCP Challenge”, and `lede` copy/class contract.
+- Added light/dark design tokens, `color-scheme: light dark`, and a `prefers-color-scheme: dark` override.
+- `mise exec node@22.23.2 -- npm test -- src/app/App.test.tsx`: PASS (1 file, 1 test).
+- `mise exec node@22.23.2 -- npm run lint`: PASS.
+- `mise exec node@22.23.2 -- npm run build`: PASS.
+
+Self-review: all three review findings are addressed without changing the test contract or unrelated files.

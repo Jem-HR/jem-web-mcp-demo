@@ -1,4 +1,5 @@
 :root {
+  color-scheme: light dark;
   font-family:
     Inter,
     ui-sans-serif,
@@ -7,8 +8,11 @@
     BlinkMacSystemFont,
     "Segoe UI",
     sans-serif;
-  color: #17202a;
-  background: #f4f6f8;
+  color: #181816;
+  background: #f5f5f2;
+  --surface: #ffffff;
+  --muted: #686863;
+  --border: #deded8;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
 }
@@ -22,26 +26,26 @@ body {
   min-width: 320px;
 }
 
-.shell {
+.app-shell {
   display: grid;
   min-height: 100vh;
   place-items: center;
   padding: 2rem;
 }
 
-.shell-card {
+.app-card {
   width: min(100%, 38rem);
   padding: 3rem;
   text-align: center;
-  background: #fff;
-  border: 1px solid #dce2e8;
+  background: var(--surface);
+  border: 1px solid var(--border);
   border-radius: 1rem;
   box-shadow: 0 1rem 3rem rgb(23 32 42 / 8%);
 }
 
 .eyebrow {
   margin: 0 0 0.75rem;
-  color: #5b6875;
+  color: var(--muted);
   font-size: 0.8rem;
   font-weight: 700;
   letter-spacing: 0.08em;
@@ -52,14 +56,14 @@ h1 {
   font-size: clamp(2rem, 6vw, 3rem);
   line-height: 1.1;
 }
-.shell-card > p:last-child {
+.lede {
   margin: 1rem 0 0;
-  color: #5b6875;
+  color: var(--muted);
   font-size: 1.1rem;
 }
 
 @media (prefers-reduced-motion: no-preference) {
-  .shell-card {
+  .app-card {
     animation: enter 300ms ease-out both;
   }
   @keyframes enter {
@@ -71,5 +75,15 @@ h1 {
       opacity: 1;
       transform: translateY(0);
     }
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color: #f2f2ed;
+    background: #181816;
+    --surface: #242421;
+    --muted: #b8b8ae;
+    --border: #45453f;
   }
 }
