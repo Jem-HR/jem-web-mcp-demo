@@ -10,7 +10,7 @@ export function registerWebMcpTools(
   onStatus: StatusListener,
   tools: readonly WebMCP.ModelContextTool[] = webMcpTools,
 ): () => void {
-  if (!modelContext) {
+  if (typeof modelContext?.registerTool !== "function") {
     onStatus({ state: "unsupported" });
     return () => undefined;
   }
@@ -27,6 +27,7 @@ export function registerWebMcpTools(
       );
     }
   } catch {
+    controller.abort();
     void Promise.allSettled(registrations);
     onStatus({ state: "error", message: REGISTRATION_ERROR });
     return () => controller.abort();
@@ -40,6 +41,7 @@ export function registerWebMcpTools(
     })
     .catch(() => {
       if (!controller.signal.aborted) {
+        controller.abort();
         onStatus({ state: "error", message: REGISTRATION_ERROR });
       }
     });

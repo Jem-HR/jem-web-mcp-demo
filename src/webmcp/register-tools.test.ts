@@ -10,14 +10,24 @@ function createModelContext(
 }
 
 describe("registerWebMcpTools", () => {
-  it("reports unsupported without attempting registration", () => {
-    const onStatus = vi.fn();
+  it("reports unsupported when registerTool is unavailable", () => {
+    const unsupportedContexts = [
+      undefined,
+      {},
+      { registerTool: "not a function" },
+    ];
 
-    const dispose = registerWebMcpTools(undefined, onStatus);
+    for (const modelContext of unsupportedContexts) {
+      const onStatus = vi.fn();
+      const dispose = registerWebMcpTools(
+        modelContext as WebMCP.ModelContext | undefined,
+        onStatus,
+      );
 
-    expect(onStatus).toHaveBeenCalledOnce();
-    expect(onStatus).toHaveBeenCalledWith({ state: "unsupported" });
-    expect(() => dispose()).not.toThrow();
+      expect(onStatus).toHaveBeenCalledOnce();
+      expect(onStatus).toHaveBeenCalledWith({ state: "unsupported" });
+      expect(() => dispose()).not.toThrow();
+    }
   });
 
   it("registers every tool and reports readiness", async () => {
@@ -59,6 +69,7 @@ describe("registerWebMcpTools", () => {
     const onStatus = vi.fn();
 
     registerWebMcpTools(createModelContext(registerTool), onStatus);
+    const signal = registerTool.mock.calls[0]?.[1]?.signal;
 
     await vi.waitFor(() => {
       expect(onStatus).toHaveBeenLastCalledWith({
@@ -66,6 +77,7 @@ describe("registerWebMcpTools", () => {
         message: "WebMCP tool registration failed.",
       });
     });
+    expect(signal?.aborted).toBe(true);
   });
 
   it("contains earlier rejected registrations when a later registration throws", async () => {
@@ -86,11 +98,15 @@ describe("registerWebMcpTools", () => {
       webMcpTools[0],
       webMcpTools[0],
     ]);
+    const firstSignal = registerTool.mock.calls[0]?.[1]?.signal;
+    const secondSignal = registerTool.mock.calls[1]?.[1]?.signal;
 
     expect(onStatus).toHaveBeenLastCalledWith({
       state: "error",
       message: "WebMCP tool registration failed.",
     });
+    expect(firstSignal).toBe(secondSignal);
+    expect(firstSignal?.aborted).toBe(true);
     expect(rejectedThen).toHaveBeenCalled();
     rejectRegistration(new Error("first browser-internal detail"));
     await vi.waitFor(() => {

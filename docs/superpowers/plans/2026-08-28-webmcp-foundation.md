@@ -6,7 +6,7 @@
 
 **Architecture:** UI and WebMCP handlers share plain TypeScript application capabilities. A framework-independent registration adapter owns feature detection, registration, failure containment, and abort-based cleanup; a small React hook binds that lifecycle to the placeholder shell.
 
-**Tech Stack:** React 19.2.8, TypeScript 7.0.2, Vite 8.2.2, Vitest 4.1.11, Testing Library 16.3.3, ESLint 10.9.1, Prettier 3.9.6, and `webmcp-types` 0.1.5.
+**Tech Stack:** React 19.2.8, TypeScript 6.0.3, Vite 8.2.2, Vitest 4.1.11, Testing Library 16.3.3, ESLint 10.9.1, Prettier 3.9.6, and `webmcp-types` 0.1.5.
 
 **Spec:** `docs/superpowers/specs/2026-08-28-webmcp-foundation-design.md`
 
@@ -19,7 +19,7 @@
 - UI actions and WebMCP tools must call shared application capabilities rather than duplicate behavior.
 - The only starter tool is the read-only `get_app_status` tool.
 - Styling must remain neutral, responsive, semantic, keyboard-safe, and compatible with reduced-motion and color-scheme preferences.
-- Use Node.js 20.19.0 or newer. The local execution command is `mise exec node@20.19.2 -- npm` because the default shell currently selects Node.js 20.18.1.
+- Compatibility ruling: use Node.js 22.22.2 or newer and TypeScript 6.0.3. Run local commands with `mise exec node@22.23.2 -- npm`; this is the final validated floor and local toolchain for the pinned dependency set.
 - Pin dependency versions exactly and commit `package-lock.json`.
 - Follow red-green-refactor for every behavior change and commit after every task.
 
@@ -85,7 +85,7 @@ Create `package.json`:
   "private": true,
   "type": "module",
   "engines": {
-    "node": ">=20.19.0"
+    "node": ">=22.22.2"
   },
   "scripts": {
     "dev": "vite",
@@ -114,7 +114,7 @@ Create `package.json`:
     "globals": "17.11.0",
     "jsdom": "30.0.1",
     "prettier": "3.9.6",
-    "typescript": "7.0.2",
+    "typescript": "6.0.3",
     "typescript-eslint": "8.68.0",
     "vite": "8.2.2",
     "vitest": "4.1.11",
@@ -255,7 +255,7 @@ afterEach(() => {
 Run:
 
 ```bash
-mise exec node@20.19.2 -- npm install
+mise exec node@22.23.2 -- npm install
 ```
 
 Expected: exit 0, `package-lock.json` is created, and npm reports no engine mismatch.
@@ -289,7 +289,7 @@ describe("App", () => {
 Run:
 
 ```bash
-mise exec node@20.19.2 -- npm test -- src/app/App.test.tsx
+mise exec node@22.23.2 -- npm test -- src/app/App.test.tsx
 ```
 
 Expected: FAIL because `src/app/App.tsx` does not exist.
@@ -450,7 +450,7 @@ h1 {
 Run:
 
 ```bash
-mise exec node@20.19.2 -- npm test -- src/app/App.test.tsx
+mise exec node@22.23.2 -- npm test -- src/app/App.test.tsx
 ```
 
 Expected: PASS with 1 test.
@@ -503,7 +503,7 @@ describe("getAppStatus", () => {
 Run:
 
 ```bash
-mise exec node@20.19.2 -- npm test -- src/app/app-status.test.ts
+mise exec node@22.23.2 -- npm test -- src/app/app-status.test.ts
 ```
 
 Expected: FAIL because `src/app/app-status.ts` does not exist.
@@ -533,7 +533,7 @@ export function getAppStatus(): AppStatus {
 Run:
 
 ```bash
-mise exec node@20.19.2 -- npm test -- src/app/app-status.test.ts
+mise exec node@22.23.2 -- npm test -- src/app/app-status.test.ts
 ```
 
 Expected: PASS with 1 test.
@@ -582,7 +582,7 @@ describe("getAppStatusTool", () => {
 Run:
 
 ```bash
-mise exec node@20.19.2 -- npm test -- src/webmcp/tools.test.ts
+mise exec node@22.23.2 -- npm test -- src/webmcp/tools.test.ts
 ```
 
 Expected: FAIL because `src/webmcp/tools.ts` does not exist.
@@ -626,7 +626,7 @@ export const webMcpTools: readonly WebMCP.ModelContextTool[] = [
 Run:
 
 ```bash
-mise exec node@20.19.2 -- npm test -- src/app/app-status.test.ts src/webmcp/tools.test.ts
+mise exec node@22.23.2 -- npm test -- src/app/app-status.test.ts src/webmcp/tools.test.ts
 ```
 
 Expected: PASS with 4 tests.
@@ -747,7 +747,7 @@ describe("registerWebMcpTools", () => {
 Run:
 
 ```bash
-mise exec node@20.19.2 -- npm test -- src/webmcp/register-tools.test.ts
+mise exec node@22.23.2 -- npm test -- src/webmcp/register-tools.test.ts
 ```
 
 Expected: FAIL because `src/webmcp/register-tools.ts` does not exist.
@@ -809,7 +809,7 @@ export function registerWebMcpTools(
 Run:
 
 ```bash
-mise exec node@20.19.2 -- npm test -- src/webmcp/register-tools.test.ts src/webmcp/tools.test.ts
+mise exec node@22.23.2 -- npm test -- src/webmcp/register-tools.test.ts src/webmcp/tools.test.ts
 ```
 
 Expected: PASS with 7 tests.
@@ -908,7 +908,7 @@ describe("App", () => {
 Run:
 
 ```bash
-mise exec node@20.19.2 -- npm test -- src/app/App.test.tsx
+mise exec node@22.23.2 -- npm test -- src/app/App.test.tsx
 ```
 
 Expected: FAIL because the current `App` has no WebMCP status region.
@@ -1038,7 +1038,7 @@ Append to `src/styles.css`:
 Run:
 
 ```bash
-mise exec node@20.19.2 -- npm test -- src/app/App.test.tsx src/webmcp/register-tools.test.ts
+mise exec node@22.23.2 -- npm test -- src/app/App.test.tsx src/webmcp/register-tools.test.ts
 ```
 
 Expected: PASS with 7 tests.
@@ -1076,7 +1076,7 @@ A client-side React foundation for the [OpenAI WebMCP Challenge](https://openai.
 
 ## Requirements
 
-- Node.js 20.19 or newer
+- Node.js 22.22.2 or newer
 - npm 10 or newer
 - A WebMCP-capable browser for native tool discovery
 
@@ -1187,7 +1187,7 @@ SOFTWARE.
 Run:
 
 ```bash
-mise exec node@20.19.2 -- npm run format
+mise exec node@22.23.2 -- npm run format
 git diff --check
 git diff --stat
 ```
@@ -1199,10 +1199,10 @@ Expected: Prettier exits 0, `git diff --check` reports no whitespace errors, and
 Run:
 
 ```bash
-mise exec node@20.19.2 -- npm run check
+mise exec node@22.23.2 -- npm run check
 ```
 
-Expected: all 11 tests pass, ESLint reports zero errors, Prettier reports all files formatted, TypeScript exits 0, and Vite produces `dist/` successfully.
+Expected: all 12 tests pass, ESLint reports zero errors, Prettier reports all files formatted, TypeScript exits 0, and Vite produces `dist/` successfully.
 
 - [ ] **Step 5: Inspect the final repository state**
 
@@ -1228,7 +1228,7 @@ git commit -m "docs: document WebMCP challenge foundation"
 Run:
 
 ```bash
-mise exec node@20.19.2 -- npm run check
+mise exec node@22.23.2 -- npm run check
 git status --short
 ```
 

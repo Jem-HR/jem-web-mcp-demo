@@ -24,9 +24,25 @@ describe("getAppStatusTool", () => {
     });
   });
 
-  it("rejects unexpected input even when the caller bypasses the schema", async () => {
-    await expect(
-      getAppStatusTool.execute({ unexpected: true }),
-    ).rejects.toThrow("get_app_status does not accept input properties.");
+  it("rejects invalid input shapes when the caller bypasses the schema", async () => {
+    const execute = getAppStatusTool.execute as (
+      input: unknown,
+    ) => Promise<unknown>;
+    const invalidInputs = [
+      null,
+      undefined,
+      true,
+      42,
+      "unexpected",
+      [],
+      ["unexpected"],
+      { unexpected: true },
+    ];
+
+    for (const input of invalidInputs) {
+      await expect(execute(input)).rejects.toThrow(
+        "get_app_status does not accept input properties.",
+      );
+    }
   });
 });

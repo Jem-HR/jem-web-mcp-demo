@@ -1,6 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import * as appStatusCapability from "./app-status";
 import { App } from "./App";
 
 function setModelContext(modelContext: WebMCP.ModelContext | undefined) {
@@ -11,17 +12,24 @@ function setModelContext(modelContext: WebMCP.ModelContext | undefined) {
 }
 
 afterEach(() => {
+  vi.restoreAllMocks();
   setModelContext(undefined);
 });
 
 describe("App", () => {
-  it("renders the neutral WebMCP foundation shell", () => {
+  it("renders shared application status values in the neutral shell", () => {
+    vi.spyOn(appStatusCapability, "getAppStatus").mockReturnValue({
+      name: "Capability-fed app",
+      phase: "prototype",
+      webMcpReady: true,
+    } as never);
     setModelContext(undefined);
     render(<App />);
 
     expect(
-      screen.getByRole("heading", { name: "Jem WebMCP Demo" }),
+      screen.getByRole("heading", { name: "Capability-fed app" }),
     ).toBeInTheDocument();
+    expect(screen.getByText(/prototype/i)).toBeInTheDocument();
     expect(
       screen.getByText("Ready for the Figma handoff."),
     ).toBeInTheDocument();

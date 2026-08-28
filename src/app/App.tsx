@@ -1,5 +1,6 @@
 import { useWebMcpStatus } from "../webmcp/use-webmcp-status";
 import type { WebMcpStatus } from "../webmcp/types";
+import { getAppStatus } from "./app-status";
 
 function getStatusCopy(status: WebMcpStatus): string {
   switch (status.state) {
@@ -15,13 +16,14 @@ function getStatusCopy(status: WebMcpStatus): string {
 }
 
 export function App() {
+  const appStatus = getAppStatus();
   const webMcpStatus = useWebMcpStatus();
 
   return (
     <main className="app-shell">
       <section className="app-card" aria-labelledby="app-title">
-        <p className="eyebrow">OpenAI WebMCP Challenge</p>
-        <h1 id="app-title">Jem WebMCP Demo</h1>
+        <p className="eyebrow">{appStatus.phase} · OpenAI WebMCP Challenge</p>
+        <h1 id="app-title">{appStatus.name}</h1>
         <p className="lede">Ready for the Figma handoff.</p>
 
         <div

@@ -14,7 +14,12 @@ export const getAppStatusTool = {
     readOnlyHint: true,
   },
   async execute(input) {
-    if (Object.keys(input).length > 0) {
+    if (
+      typeof input !== "object" ||
+      input === null ||
+      Array.isArray(input) ||
+      Object.keys(input).length > 0
+    ) {
       throw new TypeError("get_app_status does not accept input properties.");
     }
 
