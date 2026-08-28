@@ -1770,6 +1770,6 @@ git commit -m "docs: prepare the Jem Unlocked challenge demo"
 
 Use `superpowers:requesting-code-review` for the whole branch from the pre-prototype commit `a48ab8a^` through `HEAD`. Fix every confirmed correctness, privacy, accessibility, WebMCP-contract, or maintainability finding, rerun `mise exec node@22.23.2 -- npm run check`, and commit fixes separately.
 
-- [ ] **Step 7: Verify before declaring completion**
+- [x] **Step 7: Verify before declaring completion**
 
 Use `superpowers:verification-before-completion`; capture fresh output from `mise exec node@22.23.2 -- npm run check`, confirm `git status --short` is empty, and only then report the branch as complete.
