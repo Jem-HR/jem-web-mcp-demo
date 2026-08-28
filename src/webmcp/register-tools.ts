@@ -1,0 +1,45 @@
+import { webMcpTools } from "./tools";
+import type { WebMcpStatus } from "./types";
+
+type StatusListener = (status: WebMcpStatus) => void;
+
+const REGISTRATION_ERROR = "WebMCP tool registration failed.";
+
+export function registerWebMcpTools(
+  modelContext: WebMCP.ModelContext | undefined,
+  onStatus: StatusListener,
+  tools: readonly WebMCP.ModelContextTool[] = webMcpTools,
+): () => void {
+  if (!modelContext) {
+    onStatus({ state: "unsupported" });
+    return () => undefined;
+  }
+
+  const controller = new AbortController();
+  onStatus({ state: "registering" });
+
+  let registrations: Promise<void>[];
+
+  try {
+    registrations = tools.map((tool) =>
+      modelContext.registerTool(tool, { signal: controller.signal }),
+    );
+  } catch {
+    onStatus({ state: "error", message: REGISTRATION_ERROR });
+    return () => controller.abort();
+  }
+
+  void Promise.all(registrations)
+    .then(() => {
+      if (!controller.signal.aborted) {
+        onStatus({ state: "ready", toolCount: tools.length });
+      }
+    })
+    .catch(() => {
+      if (!controller.signal.aborted) {
+        onStatus({ state: "error", message: REGISTRATION_ERROR });
+      }
+    });
+
+  return () => controller.abort();
+}
