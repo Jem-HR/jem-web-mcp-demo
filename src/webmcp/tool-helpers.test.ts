@@ -9,6 +9,33 @@ import {
   safeToolExecute,
 } from "./tool-helpers";
 
+const INVALID_INPUT_MESSAGE = "test_tool received invalid input.";
+
+function expectFixedValidationError(
+  execute: () => unknown,
+  rejectedSecret: string,
+): void {
+  let error: unknown;
+
+  try {
+    execute();
+  } catch (caughtError) {
+    error = caughtError;
+  }
+
+  expect(error).toBeInstanceOf(TypeError);
+  expect(error instanceof Error ? error.message : "").toBe(
+    INVALID_INPUT_MESSAGE,
+  );
+
+  const renderedError = [
+    String(error),
+    error instanceof Error ? error.message : "",
+    JSON.stringify(error) ?? "",
+  ].join(" ");
+  expect(renderedError).not.toContain(rejectedSecret);
+}
+
 describe("assertClosedObject", () => {
   it("accepts allowed own keys and rejects invalid shapes", () => {
     expect(
@@ -45,6 +72,27 @@ describe("assertClosedObject", () => {
     expect(() =>
       assertClosedObject(inheritedUnknown, ["category"], "test_tool"),
     ).toThrow("test_tool received invalid input.");
+  });
+
+  it("rejects own non-enumerable and symbol keys with a fixed TypeError", () => {
+    const nonEnumerable = { category: "all" };
+    Object.defineProperty(nonEnumerable, "category", {
+      enumerable: false,
+    });
+    expectFixedValidationError(
+      () => assertClosedObject(nonEnumerable, ["category"], "test_tool"),
+      "sk-non-enumerable-secret",
+    );
+
+    const symbolKey = Symbol("secret-key");
+    const symbolInput = {
+      category: "all",
+      [symbolKey]: "sk-symbol-secret",
+    };
+    expectFixedValidationError(
+      () => assertClosedObject(symbolInput, ["category"], "test_tool"),
+      "sk-symbol-secret",
+    );
   });
 
   it("rejects objects with non-plain prototypes", () => {
@@ -127,6 +175,40 @@ describe("field assertions", () => {
       );
     }
   });
+
+  const invalidFieldCases: {
+    name: string;
+    execute: () => unknown;
+    rejectedSecret: string;
+  }[] = [
+    {
+      name: "assertString rejects an object containing a secret",
+      execute: () => assertString({ token: "sk-string-secret" }, "test_tool"),
+      rejectedSecret: "sk-string-secret",
+    },
+    {
+      name: "assertFiniteNumber rejects a string containing a secret",
+      execute: () => assertFiniteNumber("sk-number-secret", "test_tool"),
+      rejectedSecret: "sk-number-secret",
+    },
+    {
+      name: "assertBoolean rejects an object containing a secret",
+      execute: () => assertBoolean({ token: "sk-boolean-secret" }, "test_tool"),
+      rejectedSecret: "sk-boolean-secret",
+    },
+    {
+      name: "assertEnum rejects an out-of-tuple secret",
+      execute: () => assertEnum("sk-enum-secret", ["all", "open"], "test_tool"),
+      rejectedSecret: "sk-enum-secret",
+    },
+  ];
+
+  it.each(invalidFieldCases)(
+    "$name with an exact non-sensitive TypeError",
+    ({ execute, rejectedSecret }) => {
+      expectFixedValidationError(execute, rejectedSecret);
+    },
+  );
 });
 
 describe("safeToolExecute", () => {
