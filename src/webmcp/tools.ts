@@ -1,32 +1,35 @@
 import { getAppStatus } from "../app/app-status";
+import type { DemoCapabilities } from "../demo/capabilities";
+import { createEmployeeTools } from "./employee-tools";
+import { createEmployerTools } from "./employer-tools";
+import { assertClosedObject } from "./tool-helpers";
 
 export const getAppStatusTool = {
   name: "get_app_status",
   title: "Get application status",
   description:
-    "Read the current foundation status of the Jem WebMCP Demo without changing application state.",
+    "Read the completed Jem Unlocked prototype status without changing application state.",
   inputSchema: {
     type: "object",
     properties: {},
+    required: [],
     additionalProperties: false,
   },
   annotations: {
     readOnlyHint: true,
   },
   async execute(input) {
-    if (
-      typeof input !== "object" ||
-      input === null ||
-      Array.isArray(input) ||
-      Object.keys(input).length > 0
-    ) {
-      throw new TypeError("get_app_status does not accept input properties.");
-    }
-
+    assertClosedObject(input, [], "get_app_status");
     return getAppStatus();
   },
 } satisfies WebMCP.ModelContextTool;
 
-export const webMcpTools: readonly WebMCP.ModelContextTool[] = [
-  getAppStatusTool,
-];
+export function createWebMcpTools(
+  capabilities: DemoCapabilities,
+): readonly WebMCP.ModelContextTool[] {
+  return [
+    getAppStatusTool,
+    ...createEmployeeTools(capabilities.employee),
+    ...createEmployerTools(capabilities.employer),
+  ];
+}

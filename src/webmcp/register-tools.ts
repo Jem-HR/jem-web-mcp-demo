@@ -1,4 +1,3 @@
-import { webMcpTools } from "./tools";
 import type { WebMcpStatus } from "./types";
 
 type StatusListener = (status: WebMcpStatus) => void;
@@ -8,7 +7,7 @@ const REGISTRATION_ERROR = "WebMCP tool registration failed.";
 export function registerWebMcpTools(
   modelContext: WebMCP.ModelContext | undefined,
   onStatus: StatusListener,
-  tools: readonly WebMCP.ModelContextTool[] = webMcpTools,
+  tools: readonly WebMCP.ModelContextTool[],
 ): () => void {
   if (typeof modelContext?.registerTool !== "function") {
     onStatus({ state: "unsupported" });

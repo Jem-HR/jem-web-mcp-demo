@@ -1,5 +1,5 @@
-import { fireEvent, render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, it } from "vitest";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { DemoProvider } from "../demo/DemoProvider";
 import { createInitialDemoState } from "../demo/fixtures";
@@ -12,6 +12,12 @@ function setModelContext(modelContext: WebMCP.ModelContext | undefined) {
     configurable: true,
     value: modelContext,
   });
+}
+
+function createModelContext(
+  registerTool: WebMCP.ModelContext["registerTool"],
+): WebMCP.ModelContext {
+  return { registerTool } as unknown as WebMCP.ModelContext;
 }
 
 afterEach(() => {
@@ -44,6 +50,60 @@ describe("App", () => {
       "true",
     );
     expect(screen.getByText("Nomsa Dlamini")).toBeInTheDocument();
+  });
+
+  it("registers the stable twelve-tool facade once across ordinary state transitions and aborts it on unmount", async () => {
+    const registerTool = vi.fn<WebMCP.ModelContext["registerTool"]>();
+    registerTool.mockResolvedValue(undefined);
+    setModelContext(createModelContext(registerTool));
+
+    const view = render(<App />);
+
+    expect(
+      await screen.findByText("WebMCP is ready with 12 tools."),
+    ).toBeInTheDocument();
+    expect(registerTool).toHaveBeenCalledTimes(12);
+    expect(registerTool.mock.calls.map(([tool]) => tool.name)).toEqual([
+      "get_app_status",
+      "get_employee_dashboard",
+      "update_savings_goal",
+      "list_employee_opportunities",
+      "request_shift",
+      "allocate_reward",
+      "get_employer_dashboard",
+      "list_programmes",
+      "create_opportunity_draft",
+      "validate_opportunity",
+      "list_open_shifts",
+      "list_fairness_exceptions",
+    ]);
+    const signals = registerTool.mock.calls.map(
+      ([, options]) => options?.signal,
+    );
+    expect(new Set(signals).size).toBe(1);
+    expect(signals[0]?.aborted).toBe(false);
+
+    fireEvent.click(screen.getByRole("button", { name: "Employer Hub" }));
+    fireEvent.click(screen.getByRole("tab", { name: "Manage Shifts" }));
+    await waitFor(() => expect(registerTool).toHaveBeenCalledTimes(12));
+
+    view.unmount();
+    expect(signals[0]?.aborted).toBe(true);
+  });
+
+  it("contains registration errors behind a non-sensitive readiness state", async () => {
+    const registerTool = vi.fn<WebMCP.ModelContext["registerTool"]>();
+    registerTool.mockRejectedValue(
+      new Error("browser secret that must not reach the UI"),
+    );
+    setModelContext(createModelContext(registerTool));
+
+    render(<App />);
+
+    expect(
+      await screen.findByText("WebMCP needs attention"),
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/browser secret/i)).not.toBeInTheDocument();
   });
 
   it("renders one main landmark in completed and onboarding modes", () => {

@@ -1,7 +1,11 @@
 import { describe, expect, it, vi } from "vitest";
 
+import { createDemoCapabilities } from "../demo/capabilities";
+import { createDemoStore } from "../demo/store";
 import { registerWebMcpTools } from "./register-tools";
-import { webMcpTools } from "./tools";
+import { createWebMcpTools } from "./tools";
+
+const tools = createWebMcpTools(createDemoCapabilities(createDemoStore()));
 
 function createModelContext(
   registerTool: WebMCP.ModelContext["registerTool"],
@@ -22,6 +26,7 @@ describe("registerWebMcpTools", () => {
       const dispose = registerWebMcpTools(
         modelContext as WebMCP.ModelContext | undefined,
         onStatus,
+        tools,
       );
 
       expect(onStatus).toHaveBeenCalledOnce();
@@ -35,16 +40,16 @@ describe("registerWebMcpTools", () => {
     registerTool.mockResolvedValue(undefined);
     const onStatus = vi.fn();
 
-    registerWebMcpTools(createModelContext(registerTool), onStatus);
+    registerWebMcpTools(createModelContext(registerTool), onStatus, tools);
 
     expect(onStatus).toHaveBeenNthCalledWith(1, { state: "registering" });
     await vi.waitFor(() => {
       expect(onStatus).toHaveBeenLastCalledWith({
         state: "ready",
-        toolCount: webMcpTools.length,
+        toolCount: 12,
       });
     });
-    expect(registerTool).toHaveBeenCalledTimes(webMcpTools.length);
+    expect(registerTool).toHaveBeenCalledTimes(12);
   });
 
   it("aborts the shared registration signal during cleanup", () => {
@@ -55,6 +60,7 @@ describe("registerWebMcpTools", () => {
     const dispose = registerWebMcpTools(
       createModelContext(registerTool),
       onStatus,
+      tools,
     );
     const options = registerTool.mock.calls[0]?.[1];
 
@@ -68,7 +74,7 @@ describe("registerWebMcpTools", () => {
     registerTool.mockRejectedValue(new Error("browser-internal details"));
     const onStatus = vi.fn();
 
-    registerWebMcpTools(createModelContext(registerTool), onStatus);
+    registerWebMcpTools(createModelContext(registerTool), onStatus, tools);
     const signal = registerTool.mock.calls[0]?.[1]?.signal;
 
     await vi.waitFor(() => {
@@ -95,8 +101,8 @@ describe("registerWebMcpTools", () => {
     const onStatus = vi.fn();
 
     registerWebMcpTools(createModelContext(registerTool), onStatus, [
-      webMcpTools[0],
-      webMcpTools[0],
+      tools[0],
+      tools[0],
     ]);
     const firstSignal = registerTool.mock.calls[0]?.[1]?.signal;
     const secondSignal = registerTool.mock.calls[1]?.[1]?.signal;

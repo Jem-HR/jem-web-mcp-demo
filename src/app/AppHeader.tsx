@@ -11,7 +11,7 @@ function statusLabel(status: WebMcpStatus): string {
     case "registering":
       return "WebMCP is connecting";
     case "ready":
-      return "WebMCP is ready";
+      return `WebMCP is ready with ${status.toolCount} tools.`;
     case "unsupported":
       return "WebMCP is unavailable";
     case "error":
