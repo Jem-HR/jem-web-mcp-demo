@@ -1708,7 +1708,7 @@ git commit -m "test: harden the Jem Unlocked experience"
 - Consumes: the complete verified application.
 - Produces: setup, WebMCP testing, tool catalogue, privacy model, reset instructions, and a repeatable employee-to-employer demo story.
 
-- [ ] **Step 1: Write the documentation acceptance list before editing**
+- [x] **Step 1: Write the documentation acceptance list before editing**
 
 The README must contain these exact topics:
 
@@ -1727,11 +1727,11 @@ challenge submission checklist
 
 `docs/challenge-demo-script.md` must contain the six approved story beats: read Nomsa's dashboard, list opportunities/request a shift, allocate a reward, switch to employer metrics, draft/validate a programme, and inspect unresolved fairness exceptions.
 
-- [ ] **Step 2: Update README and add the demo script**
+- [x] **Step 2: Update README and add the demo script**
 
 Use concise South African English. Link the design spec and implementation plan. State that the demo cannot change contracts, assign shifts, launch programmes, issue payroll or rewards, resolve fairness cases, or move money.
 
-- [ ] **Step 3: Run the complete verification command**
+- [x] **Step 3: Run the complete verification command**
 
 Run: `mise exec node@22.23.2 -- npm run check`
 
@@ -1759,7 +1759,7 @@ Verify in a browser:
 6. Keyboard tabs, dialog focus/Escape, activity announcements, mobile layout, and reduced motion work.
 7. With `chrome://flags/#enable-webmcp-testing` enabled, all twelve tools register, read operations return current state, previews do not mutate, and confirmed actions update the visible UI.
 
-- [ ] **Step 5: Commit documentation**
+- [x] **Step 5: Commit documentation**
 
 ```bash
 git add README.md docs/challenge-demo-script.md docs/superpowers/plans/2026-08-28-jem-unlocked-prototype.md
