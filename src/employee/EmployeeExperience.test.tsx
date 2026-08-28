@@ -92,6 +92,23 @@ describe("EmployeeExperience", () => {
     ).toBeInTheDocument();
   });
 
+  it("provides a scoped non-shrinking tab structure for narrow screens", () => {
+    render(
+      <DemoProvider>
+        <AppShell />
+      </DemoProvider>,
+    );
+
+    const tablist = screen.getByRole("tablist", {
+      name: "Employee dashboard",
+    });
+    expect(tablist.closest(".employee-experience__tabs")).toBeInTheDocument();
+    expect(tablist).toHaveClass("tabs__list");
+    screen.getAllByRole("tab").forEach((tab) => {
+      expect(tab).toHaveClass("tabs__tab");
+    });
+  });
+
   it("previews and closes a shift request without mutating state", () => {
     const store = createDemoStore();
     render(
@@ -182,6 +199,86 @@ describe("EmployeeExperience", () => {
 
     fireEvent.click(screen.getByRole("tab", { name: "Overview" }));
     expect(screen.getByText("45% complete")).toBeInTheDocument();
+  });
+
+  it("re-previews a voucher allocation before confirming it", () => {
+    const store = createDemoStore();
+    render(
+      <DemoProvider store={store}>
+        <AppShell />
+      </DemoProvider>,
+    );
+
+    fireEvent.click(screen.getByRole("tab", { name: "Rewards" }));
+    fireEvent.click(
+      screen.getByRole("button", { name: /allocate august safety award/i }),
+    );
+    fireEvent.click(screen.getByLabelText(/choose a voucher/i));
+
+    expect(
+      screen.getByText(/preview destination: a voucher/i),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/goal savings after allocation: R\s*2\s*520/i),
+    ).toBeInTheDocument();
+    expect(store.getState().employee.goal.savedAmount).toBe(2520);
+    expect(store.getState().employee.rewards.at(-1)).toMatchObject({
+      status: "earned",
+      allocatedTo: null,
+    });
+    expect(store.getState().activity).toBeNull();
+
+    fireEvent.click(
+      screen.getByRole("button", { name: /confirm allocation/i }),
+    );
+
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(store.getState().employee.goal.savedAmount).toBe(2520);
+    expect(store.getState().employee.rewards.at(-1)).toMatchObject({
+      status: "allocated",
+      allocatedTo: "voucher",
+    });
+    expect(store.getState().activity).toMatchObject({
+      source: "ui",
+      message: "Allocated a reward.",
+    });
+    expect(screen.getByText(/R\s*150 added to a voucher/i)).toBeInTheDocument();
+  });
+
+  it("disables reward confirmation when the selected destination cannot be previewed", () => {
+    const mutable = createMutableStore();
+    render(
+      <DemoProvider store={mutable.store}>
+        <AppShell />
+      </DemoProvider>,
+    );
+
+    fireEvent.click(screen.getByRole("tab", { name: "Rewards" }));
+    fireEvent.click(
+      screen.getByRole("button", { name: /allocate august safety award/i }),
+    );
+
+    const current = mutable.store.getState();
+    mutable.replaceState({
+      ...current,
+      employee: {
+        ...current.employee,
+        rewards: current.employee.rewards.map((reward) =>
+          reward.id === "reward-safety"
+            ? { ...reward, status: "allocated", allocatedTo: "voucher" }
+            : reward,
+        ),
+      },
+    });
+    fireEvent.click(screen.getByLabelText(/choose a voucher/i));
+
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      "Choose another earned reward.",
+    );
+    expect(
+      screen.getByRole("button", { name: /confirm allocation/i }),
+    ).toBeDisabled();
+    expect(mutable.store.getState().activity).toBeNull();
   });
 
   it("keeps a failed allocation dialog open with recovery guidance", () => {

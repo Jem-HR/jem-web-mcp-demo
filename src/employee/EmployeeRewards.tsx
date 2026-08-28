@@ -5,6 +5,7 @@ import { Card } from "../components/Card";
 import { Dialog } from "../components/Dialog";
 import { StatusBadge, type StatusTone } from "../components/StatusBadge";
 import { useDemoCapabilities, useDemoSelector } from "../demo/DemoProvider";
+import type { RewardAllocationResult } from "../demo/employee-capabilities";
 import type { Reward, RewardDestination } from "../demo/types";
 import {
   destinationLabel,
@@ -14,6 +15,8 @@ import {
 
 interface RewardConfirmation {
   rewardId: string;
+  destination: RewardDestination;
+  preview: RewardAllocationResult;
   summary: string;
 }
 
@@ -61,13 +64,47 @@ export function EmployeeRewards() {
       setRecoveryMessage(`${result.error.message} ${result.error.recovery}`);
       return;
     }
-    setConfirmation({ rewardId: reward.id, summary: result.summary });
+    setConfirmation({
+      rewardId: reward.id,
+      destination: "savings",
+      preview: result.data,
+      summary: result.summary,
+    });
+  }
+
+  function selectDestination(nextDestination: RewardDestination) {
+    setDestination(nextDestination);
+    if (!confirmation) return;
+
+    const result = capabilities.employee.allocateReward(
+      {
+        rewardId: confirmation.rewardId,
+        destination: nextDestination,
+        confirm: false,
+      },
+      "ui",
+    );
+    if (!result.ok) {
+      setRecoveryMessage(`${result.error.message} ${result.error.recovery}`);
+      return;
+    }
+    setRecoveryMessage("");
+    setConfirmation({
+      rewardId: confirmation.rewardId,
+      destination: nextDestination,
+      preview: result.data,
+      summary: result.summary,
+    });
   }
 
   function confirmAllocation() {
-    if (!confirmation) return;
+    if (!confirmation || confirmation.destination !== destination) return;
     const result = capabilities.employee.allocateReward(
-      { rewardId: confirmation.rewardId, destination, confirm: true },
+      {
+        rewardId: confirmation.rewardId,
+        destination: confirmation.destination,
+        confirm: true,
+      },
       "ui",
     );
     if (!result.ok) {
@@ -75,7 +112,7 @@ export function EmployeeRewards() {
       return;
     }
     setSuccessMessage(
-      `${formatEmployeeCurrency(result.data.amount)} added to ${destinationLabel(destination)}`,
+      `${formatEmployeeCurrency(result.data.amount)} added to ${destinationLabel(confirmation.destination)}`,
     );
     closeConfirmation();
   }
@@ -138,7 +175,15 @@ export function EmployeeRewards() {
             <Button onClick={closeConfirmation} variant="secondary">
               Cancel
             </Button>
-            <Button onClick={confirmAllocation}>Confirm allocation</Button>
+            <Button
+              disabled={
+                confirmation === null ||
+                confirmation.destination !== destination
+              }
+              onClick={confirmAllocation}
+            >
+              Confirm allocation
+            </Button>
           </>
         }
         onClose={closeConfirmation}
@@ -156,13 +201,20 @@ export function EmployeeRewards() {
               {formatEmployeeCurrency(selectedReward.amount)}{" "}
               {selectedReward.rewardType}
             </p>
+            <p>
+              Preview destination: {destinationLabel(confirmation.destination)}
+            </p>
+            <p>
+              Goal savings after allocation:{" "}
+              {formatEmployeeCurrency(confirmation.preview.goalSavedAmount)}
+            </p>
             <fieldset className="reward-destinations">
               <legend>Choose a destination</legend>
               <label>
                 <input
                   checked={destination === "savings"}
                   name="reward-destination"
-                  onChange={() => setDestination("savings")}
+                  onChange={() => selectDestination("savings")}
                   type="radio"
                 />
                 Add to Jem Savings
@@ -171,7 +223,7 @@ export function EmployeeRewards() {
                 <input
                   checked={destination === "voucher"}
                   name="reward-destination"
-                  onChange={() => setDestination("voucher")}
+                  onChange={() => selectDestination("voucher")}
                   type="radio"
                 />
                 Choose a voucher

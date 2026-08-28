@@ -33,17 +33,19 @@ export function EmployeeExperience() {
         <h1 id="employee-title">Hey {firstName} 👋</h1>
         <p>Your next move can bring your goal closer.</p>
       </header>
-      <Tabs
-        ariaLabel="Employee dashboard"
-        onSelect={(tab) =>
-          store.dispatch({
-            type: "navigation/set-employee-tab",
-            tab: tab as EmployeeTab,
-          })
-        }
-        selectedId={activeTab}
-        tabs={tabs}
-      />
+      <div className="employee-experience__tabs">
+        <Tabs
+          ariaLabel="Employee dashboard"
+          onSelect={(tab) =>
+            store.dispatch({
+              type: "navigation/set-employee-tab",
+              tab: tab as EmployeeTab,
+            })
+          }
+          selectedId={activeTab}
+          tabs={tabs}
+        />
+      </div>
     </main>
   );
 }

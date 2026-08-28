@@ -138,6 +138,11 @@
   color: var(--jem-muted);
 }
 
+.employee-experience__tabs {
+  min-width: 0;
+  max-width: 100%;
+}
+
 .employee-overview,
 .employee-panel {
   display: grid;
@@ -395,6 +400,21 @@
   .employee-card__heading-row {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .employee-experience__tabs .tabs,
+  .employee-experience__tabs .tabs__list {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .employee-experience__tabs .tabs__list {
+    overflow-x: auto;
+    overscroll-behavior-inline: contain;
+  }
+
+  .employee-experience__tabs .tabs__tab {
+    flex: 0 0 auto;
   }
 }
 
