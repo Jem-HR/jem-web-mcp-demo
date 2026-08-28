@@ -62,6 +62,49 @@ h1 {
   font-size: 1.1rem;
 }
 
+.status-panel {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  margin-top: 2rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: 0.85rem;
+  background: var(--accent-soft);
+  font-size: 0.925rem;
+  line-height: 1.4;
+}
+
+.status-panel--error {
+  background: var(--error-soft);
+  color: var(--error);
+}
+
+.status-dot {
+  width: 0.55rem;
+  height: 0.55rem;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.status-panel--registering .status-dot {
+  animation: pulse 1.2s ease-in-out infinite;
+}
+
+.testing-note {
+  margin: 1rem 0 0;
+  color: var(--muted);
+  font-size: 0.825rem;
+  line-height: 1.5;
+}
+
+@keyframes pulse {
+  50% {
+    opacity: 0.35;
+  }
+}
+
 @media (prefers-reduced-motion: no-preference) {
   .app-card {
     animation: enter 300ms ease-out both;
