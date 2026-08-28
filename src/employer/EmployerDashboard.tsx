@@ -42,6 +42,7 @@ export function EmployerDashboard() {
   }
 
   const dashboard = dashboardResult.data;
+  const exceptionCount = exceptionsResult.data.length;
   const budgetUsage =
     dashboard.totalProgrammeBudget === 0
       ? 0
@@ -95,7 +96,10 @@ export function EmployerDashboard() {
       >
         <header className="employer-panel__header">
           <h2 id="dashboard-exceptions-title">Data exceptions</h2>
-          <p>Three anonymised records need review.</p>
+          <p>
+            {exceptionCount} anonymised{" "}
+            {exceptionCount === 1 ? "record needs" : "records need"} review.
+          </p>
         </header>
         <div className="employer-card-grid">
           {exceptionsResult.data.map((exception) => (

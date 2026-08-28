@@ -1,17 +1,36 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
 import { AppShell } from "../app/AppShell";
 import { DemoProvider } from "./DemoProvider";
 import { createInitialDemoState } from "./fixtures";
-import { createDemoStore } from "./store";
+import { demoReducer } from "./reducer";
 import type { DemoState, DemoStore } from "./types";
 
-const protectedSentinels = [
-  "PRIVATE-GOAL-7Q9X",
+const protectedRawSentinels = [
+  "PRIVATE_GOAL_NAME_7Q9X",
+  "PRIVATE_GOAL_EMOJI_4W2P",
   "987654321",
   "876543219",
   "765432198",
+  "654321987",
+  "543219876",
+  "432198765",
+  "321987654",
+  "219876543",
+  "198765432",
+] as const;
+
+const protectedCurrencySentinels = [
+  "R 987 654 321",
+  "R 876 543 219",
+  "R 765 432 198",
+  "R 654 321 987",
+  "R 543 219 876",
+  "R 432 198 765",
+  "R 321 987 654",
+  "R 219 876 543",
+  "R 198 765 432",
 ];
 
 function protectedState(): DemoState {
@@ -23,13 +42,20 @@ function protectedState(): DemoState {
       ...initial.employee,
       goal: {
         ...initial.employee.goal,
-        name: protectedSentinels[0] ?? "PRIVATE-GOAL",
-        targetAmount: Number(protectedSentinels[1]),
-        savedAmount: Number(protectedSentinels[2]),
+        name: protectedRawSentinels[0],
+        emoji: protectedRawSentinels[1],
+        targetAmount: Number(protectedRawSentinels[2]),
+        savedAmount: Number(protectedRawSentinels[3]),
+        monthlyContribution: Number(protectedRawSentinels[4]),
       },
       expenses: {
-        ...initial.employee.expenses,
-        housing: Number(protectedSentinels[3]),
+        housing: Number(protectedRawSentinels[5]),
+        transport: Number(protectedRawSentinels[6]),
+        food: Number(protectedRawSentinels[7]),
+        dependants: Number(protectedRawSentinels[8]),
+        debt: Number(protectedRawSentinels[9]),
+        airtime: Number(protectedRawSentinels[10]),
+        other: Number(protectedRawSentinels[2]),
       },
     },
   };
@@ -51,11 +77,20 @@ function privacyGuardStore(state: DemoState): DemoStore {
       },
     },
   });
-  const guardedState = { ...state, employee } as DemoState;
+  let guardedState = { ...state, employee } as DemoState;
+  const listeners = new Set<() => void>();
   return {
-    dispatch() {},
+    dispatch(action) {
+      const nextState = demoReducer(guardedState, action);
+      if (nextState === guardedState) return;
+      guardedState = nextState;
+      listeners.forEach((listener) => listener());
+    },
     getState: () => guardedState,
-    subscribe: () => () => {},
+    subscribe(listener) {
+      listeners.add(listener);
+      return () => listeners.delete(listener);
+    },
   };
 }
 
@@ -68,7 +103,7 @@ function serialiseRenderedTree(root: Element): string {
 }
 
 describe("employer UI privacy boundary", () => {
-  it("does not read or render protected employee financial fields", () => {
+  it("does not read or render protected employee financial fields in any panel", () => {
     const state = protectedState();
     const store = privacyGuardStore(state);
 
@@ -81,28 +116,26 @@ describe("employer UI privacy boundary", () => {
     expect(
       screen.getByRole("heading", { name: /workforce overview/i }),
     ).toBeInTheDocument();
-    const renderedTree = serialiseRenderedTree(container);
-    for (const sentinel of protectedSentinels) {
-      expect(renderedTree).not.toContain(sentinel);
+    const panels = [
+      ["Dashboard", /programmes/i],
+      ["Create Opportunity", /build an opportunity/i],
+      ["Manage Shifts", /open shifts/i],
+      ["Fairness & Data", /fairness and data/i],
+    ] as const;
+
+    for (const [tabName, heading] of panels) {
+      fireEvent.click(screen.getByRole("tab", { name: tabName }));
+      expect(
+        screen.getByRole("heading", { name: heading }),
+      ).toBeInTheDocument();
+
+      const renderedTree = serialiseRenderedTree(container);
+      for (const sentinel of [
+        ...protectedRawSentinels,
+        ...protectedCurrencySentinels,
+      ]) {
+        expect(renderedTree).not.toContain(sentinel);
+      }
     }
-    expect(renderedTree).not.toContain("School Fees");
-    expect(renderedTree).not.toContain("R2,520");
-    expect(renderedTree).not.toContain("R6,000");
-  });
-
-  it("keeps protected fixture values out of employer mode", () => {
-    const initial = createInitialDemoState();
-    const store = createDemoStore({ ...initial, mode: "employer" });
-
-    const { container } = render(
-      <DemoProvider store={store}>
-        <AppShell />
-      </DemoProvider>,
-    );
-
-    const renderedTree = serialiseRenderedTree(container);
-    expect(renderedTree).not.toContain("School Fees");
-    expect(renderedTree).not.toContain("R2,520");
-    expect(renderedTree).not.toContain("R6,000");
   });
 });

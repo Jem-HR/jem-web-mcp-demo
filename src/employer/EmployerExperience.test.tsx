@@ -6,7 +6,12 @@ import { AppShell } from "../app/AppShell";
 import { DemoProvider } from "../demo/DemoProvider";
 import { createInitialDemoState } from "../demo/fixtures";
 import { createDemoStore } from "../demo/store";
-import type { EmployerTab } from "../demo/types";
+import type {
+  DemoAction,
+  DemoStore,
+  EmployerTab,
+  OpportunityDraft,
+} from "../demo/types";
 import featuresCss from "../styles/features.css?raw";
 
 function setModelContext(modelContext: WebMCP.ModelContext | undefined) {
@@ -25,6 +30,34 @@ function renderEmployer() {
     </DemoProvider>,
   );
   return store;
+}
+
+function createRecordingEmployerStore(): {
+  actions: DemoAction[];
+  store: DemoStore;
+} {
+  const initial = createInitialDemoState();
+  const baseStore = createDemoStore({ ...initial, mode: "employer" });
+  const actions: DemoAction[] = [];
+  return {
+    actions,
+    store: {
+      dispatch(action) {
+        actions.push(structuredClone(action));
+        baseStore.dispatch(action);
+      },
+      getState: baseStore.getState,
+      subscribe: baseStore.subscribe,
+    },
+  };
+}
+
+function renderEmployerStore(store: DemoStore) {
+  render(
+    <DemoProvider store={store}>
+      <AppShell />
+    </DemoProvider>,
+  );
 }
 
 function openOpportunityBuilder() {
@@ -94,6 +127,27 @@ describe("EmployerExperience", () => {
     expect(screen.getByText("L. Ndlovu")).toBeInTheDocument();
   });
 
+  it("derives non-three exception count copy from the safe exception DTO", () => {
+    const initial = createInitialDemoState();
+    const store = createDemoStore({
+      ...initial,
+      mode: "employer",
+      employer: {
+        ...initial.employer,
+        fairnessExceptions: initial.employer.fairnessExceptions.slice(0, 1),
+      },
+    });
+
+    renderEmployerStore(store);
+
+    expect(
+      screen.getByText("1 anonymised record needs review."),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText("Three anonymised records need review."),
+    ).not.toBeInTheDocument();
+  });
+
   it("starts with every controlled draft property and exact domain defaults", () => {
     renderEmployer();
     openOpportunityBuilder();
@@ -129,6 +183,7 @@ describe("EmployerExperience", () => {
   it("previews without mutation and invalidates a stale snapshot after edits", () => {
     const store = renderEmployer();
     openOpportunityBuilder();
+    const stateBeforePreview = structuredClone(store.getState());
 
     previewDraft();
 
@@ -137,8 +192,7 @@ describe("EmployerExperience", () => {
       within(preview).getByText("October Reliability Reward"),
     ).toBeInTheDocument();
     expect(within(preview).getByText(/R\s*125\s*000/)).toBeInTheDocument();
-    expect(store.getState().employer.activeDraft).toBeNull();
-    expect(store.getState().activity).toBeNull();
+    expect(store.getState()).toEqual(stateBeforePreview);
     expect(screen.getByRole("button", { name: /save draft/i })).toBeEnabled();
 
     fireEvent.change(screen.getByLabelText("Opportunity name"), {
@@ -154,22 +208,102 @@ describe("EmployerExperience", () => {
   });
 
   it("saves the exact preview snapshot and records validation from the UI", () => {
-    const store = renderEmployer();
+    const { actions, store } = createRecordingEmployerStore();
+    renderEmployerStore(store);
     openOpportunityBuilder();
-    fireEvent.change(screen.getByLabelText("Outcome"), {
-      target: { value: "Reduce unexcused absences" },
+    fireEvent.change(screen.getByLabelText("Opportunity type"), {
+      target: { value: "learning" },
     });
+    fireEvent.change(screen.getByLabelText("Opportunity name"), {
+      target: { value: "November Learning Reward" },
+    });
+    fireEvent.change(screen.getByLabelText("Outcome"), {
+      target: { value: "Complete priority learning" },
+    });
+    fireEvent.change(screen.getByLabelText("Eligible segment"), {
+      target: { value: "Active Gauteng retail employees" },
+    });
+    fireEvent.change(screen.getByLabelText("Qualification rule"), {
+      target: { value: "Complete the November safety pathway" },
+    });
+    fireEvent.change(screen.getByLabelText("Start date"), {
+      target: { value: "2026-11-01" },
+    });
+    fireEvent.change(screen.getByLabelText("End date"), {
+      target: { value: "2026-11-30" },
+    });
+    fireEvent.change(screen.getByLabelText("Reward type"), {
+      target: { value: "voucher" },
+    });
+    fireEvent.change(screen.getByLabelText("Reward amount"), {
+      target: { value: "300" },
+    });
+    fireEvent.change(screen.getByLabelText("Total budget"), {
+      target: { value: "130000" },
+    });
+    fireEvent.change(screen.getByLabelText("Maximum per employee"), {
+      target: { value: "350" },
+    });
+    fireEvent.change(screen.getByLabelText("Exception policy"), {
+      target: { value: "Approved training outages enter manager review" },
+    });
+    const previewSnapshot = {
+      type: "learning",
+      name: "November Learning Reward",
+      outcome: "Complete priority learning",
+      eligibleSegment: "Active Gauteng retail employees",
+      qualificationRule: "Complete the November safety pathway",
+      startDate: "2026-11-01",
+      endDate: "2026-11-30",
+      rewardType: "voucher",
+      rewardAmount: 300,
+      totalBudget: 130000,
+      maxPerEmployee: 350,
+      exceptionPolicy: "Approved training outages enter manager review",
+    } as const;
+    actions.length = 0;
+    const stateBeforePreview = structuredClone(store.getState());
     previewDraft();
+
+    expect(store.getState()).toEqual(stateBeforePreview);
+    expect(actions).toEqual([]);
+    const preview = screen.getByRole("region", { name: /draft preview/i });
+    for (const previewValue of [
+      previewSnapshot.type,
+      previewSnapshot.name,
+      previewSnapshot.outcome,
+      previewSnapshot.eligibleSegment,
+      previewSnapshot.qualificationRule,
+      previewSnapshot.exceptionPolicy,
+    ]) {
+      expect(within(preview).getByText(previewValue)).toBeInTheDocument();
+    }
+    expect(
+      within(preview).getByText(
+        `${previewSnapshot.startDate} to ${previewSnapshot.endDate}`,
+      ),
+    ).toBeInTheDocument();
+    expect(within(preview).getByText(/R\s*300 voucher/i)).toBeInTheDocument();
+    expect(within(preview).getByText(/R\s*130\s*000/)).toBeInTheDocument();
+    expect(within(preview).getByText(/R\s*350/)).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: /save draft/i }));
 
-    expect(store.getState().employer.activeDraft).toMatchObject({
-      name: "October Reliability Reward",
-      outcome: "Reduce unexcused absences",
-      totalBudget: 125000,
+    const persistedDraft: OpportunityDraft = {
+      id: "draft-opportunity",
       status: "draft",
-    });
-    expect(store.getState().activity).toMatchObject({
+      ...previewSnapshot,
+    };
+    expect(store.getState().employer.activeDraft).toEqual(persistedDraft);
+    expect(actions).toEqual([
+      {
+        type: "employer/save-draft",
+        draft: persistedDraft,
+        source: "ui",
+      },
+    ]);
+    expect(store.getState().activity).toEqual({
+      id: 1,
       source: "ui",
       message: "Saved opportunity draft.",
     });
