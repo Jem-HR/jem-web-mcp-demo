@@ -165,6 +165,14 @@ function SavedDraftCard({ draft }: { draft: OpportunityDraft }) {
           <dd>{draft.outcome}</dd>
         </div>
         <div>
+          <dt>Eligible segment</dt>
+          <dd>{draft.eligibleSegment}</dd>
+        </div>
+        <div>
+          <dt>Qualification rule</dt>
+          <dd>{draft.qualificationRule}</dd>
+        </div>
+        <div>
           <dt>Dates</dt>
           <dd>
             {draft.startDate} to {draft.endDate}

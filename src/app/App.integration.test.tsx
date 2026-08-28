@@ -202,6 +202,8 @@ describe("App integration", () => {
       draftInput.name,
       draftInput.type,
       draftInput.outcome,
+      draftInput.eligibleSegment,
+      draftInput.qualificationRule,
       draftInput.exceptionPolicy,
       `${draftInput.startDate} to ${draftInput.endDate}`,
     ]) {
