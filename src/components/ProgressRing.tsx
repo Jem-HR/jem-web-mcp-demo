@@ -1,6 +1,7 @@
 export interface ProgressRingProps {
   percentage: number;
   label: string;
+  showPercentage?: boolean;
   size?: number;
   strokeWidth?: number;
 }
@@ -8,6 +9,7 @@ export interface ProgressRingProps {
 export function ProgressRing({
   label,
   percentage,
+  showPercentage = true,
   size = 104,
   strokeWidth = 10,
 }: ProgressRingProps) {
@@ -44,15 +46,17 @@ export function ProgressRing({
           strokeDashoffset={offset}
           strokeWidth={strokeWidth}
         />
-        <text
-          className="progress-ring__percentage"
-          dominantBaseline="middle"
-          textAnchor="middle"
-          x={size / 2}
-          y={size / 2}
-        >
-          {`${Math.round(visualPercentage)}%`}
-        </text>
+        {showPercentage ? (
+          <text
+            className="progress-ring__percentage"
+            dominantBaseline="middle"
+            textAnchor="middle"
+            x={size / 2}
+            y={size / 2}
+          >
+            {`${Math.round(visualPercentage)}%`}
+          </text>
+        ) : null}
       </svg>
       <span className="progress-ring__label">{label}</span>
     </div>
