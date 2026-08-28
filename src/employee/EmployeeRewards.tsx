@@ -20,6 +20,21 @@ interface RewardConfirmation {
   summary: string;
 }
 
+function confirmationsMatch(
+  displayed: RewardConfirmation,
+  refreshed: RewardConfirmation,
+): boolean {
+  return (
+    displayed.rewardId === refreshed.rewardId &&
+    displayed.destination === refreshed.destination &&
+    displayed.summary === refreshed.summary &&
+    displayed.preview.rewardId === refreshed.preview.rewardId &&
+    displayed.preview.destination === refreshed.preview.destination &&
+    displayed.preview.amount === refreshed.preview.amount &&
+    displayed.preview.goalSavedAmount === refreshed.preview.goalSavedAmount
+  );
+}
+
 function rewardTone(status: Reward["status"]): StatusTone {
   return status === "allocated"
     ? "success"
@@ -40,21 +55,28 @@ export function EmployeeRewards() {
   const [confirmation, setConfirmation] = useState<RewardConfirmation | null>(
     null,
   );
+  const [activeRewardId, setActiveRewardId] = useState<string | null>(null);
   const [destination, setDestination] = useState<RewardDestination>("savings");
   const [recoveryMessage, setRecoveryMessage] = useState("");
+  const [noticeMessage, setNoticeMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
-  const selectedReward = confirmation
-    ? (rewards.find((reward) => reward.id === confirmation.rewardId) ?? null)
+  const selectedReward = activeRewardId
+    ? (rewards.find((reward) => reward.id === activeRewardId) ?? null)
     : null;
 
   function closeConfirmation() {
+    setActiveRewardId(null);
     setConfirmation(null);
     setRecoveryMessage("");
+    setNoticeMessage("");
   }
 
   function allocateReward(reward: Reward) {
+    setActiveRewardId(null);
+    setConfirmation(null);
     setDestination("savings");
     setRecoveryMessage("");
+    setNoticeMessage("");
     setSuccessMessage("");
     const result = capabilities.employee.allocateReward(
       { rewardId: reward.id, destination: "savings", confirm: false },
@@ -64,9 +86,10 @@ export function EmployeeRewards() {
       setRecoveryMessage(`${result.error.message} ${result.error.recovery}`);
       return;
     }
+    setActiveRewardId(reward.id);
     setConfirmation({
       rewardId: reward.id,
-      destination: "savings",
+      destination: result.data.destination,
       preview: result.data,
       summary: result.summary,
     });
@@ -74,11 +97,14 @@ export function EmployeeRewards() {
 
   function selectDestination(nextDestination: RewardDestination) {
     setDestination(nextDestination);
-    if (!confirmation) return;
+    if (!activeRewardId) return;
 
+    setConfirmation(null);
+    setRecoveryMessage("");
+    setNoticeMessage("");
     const result = capabilities.employee.allocateReward(
       {
-        rewardId: confirmation.rewardId,
+        rewardId: activeRewardId,
         destination: nextDestination,
         confirm: false,
       },
@@ -90,8 +116,8 @@ export function EmployeeRewards() {
     }
     setRecoveryMessage("");
     setConfirmation({
-      rewardId: confirmation.rewardId,
-      destination: nextDestination,
+      rewardId: activeRewardId,
+      destination: result.data.destination,
       preview: result.data,
       summary: result.summary,
     });
@@ -99,10 +125,43 @@ export function EmployeeRewards() {
 
   function confirmAllocation() {
     if (!confirmation || confirmation.destination !== destination) return;
+    const displayedConfirmation = confirmation;
+    setConfirmation(null);
+    setRecoveryMessage("");
+    setNoticeMessage("");
+
+    const refreshedResult = capabilities.employee.allocateReward(
+      {
+        rewardId: displayedConfirmation.rewardId,
+        destination,
+        confirm: false,
+      },
+      "ui",
+    );
+    if (!refreshedResult.ok) {
+      setRecoveryMessage(
+        `${refreshedResult.error.message} ${refreshedResult.error.recovery}`,
+      );
+      return;
+    }
+    const refreshedConfirmation: RewardConfirmation = {
+      rewardId: displayedConfirmation.rewardId,
+      destination: refreshedResult.data.destination,
+      preview: refreshedResult.data,
+      summary: refreshedResult.summary,
+    };
+    if (!confirmationsMatch(displayedConfirmation, refreshedConfirmation)) {
+      setConfirmation(refreshedConfirmation);
+      setNoticeMessage(
+        "Your balance changed. Review the updated allocation before confirming.",
+      );
+      return;
+    }
+
     const result = capabilities.employee.allocateReward(
       {
-        rewardId: confirmation.rewardId,
-        destination: confirmation.destination,
+        rewardId: refreshedConfirmation.rewardId,
+        destination: refreshedConfirmation.destination,
         confirm: true,
       },
       "ui",
@@ -112,7 +171,7 @@ export function EmployeeRewards() {
       return;
     }
     setSuccessMessage(
-      `${formatEmployeeCurrency(result.data.amount)} added to ${destinationLabel(confirmation.destination)}`,
+      `${formatEmployeeCurrency(result.data.amount)} added to ${destinationLabel(refreshedConfirmation.destination)}`,
     );
     closeConfirmation();
   }
@@ -128,7 +187,7 @@ export function EmployeeRewards() {
           {successMessage}
         </p>
       ) : null}
-      {recoveryMessage && !confirmation ? (
+      {recoveryMessage && selectedReward === null ? (
         <p className="recovery-message" role="alert">
           {recoveryMessage}
         </p>
@@ -194,20 +253,25 @@ export function EmployeeRewards() {
             : "Allocate reward"
         }
       >
-        {selectedReward && confirmation ? (
+        {selectedReward ? (
           <div className="confirmation-preview">
-            <p>{confirmation.summary}</p>
-            <p>
-              {formatEmployeeCurrency(selectedReward.amount)}{" "}
-              {selectedReward.rewardType}
-            </p>
-            <p>
-              Preview destination: {destinationLabel(confirmation.destination)}
-            </p>
-            <p>
-              Goal savings after allocation:{" "}
-              {formatEmployeeCurrency(confirmation.preview.goalSavedAmount)}
-            </p>
+            {confirmation ? (
+              <>
+                <p>{confirmation.summary}</p>
+                <p>
+                  {formatEmployeeCurrency(selectedReward.amount)}{" "}
+                  {selectedReward.rewardType}
+                </p>
+                <p>
+                  Preview destination:{" "}
+                  {destinationLabel(confirmation.destination)}
+                </p>
+                <p>
+                  Goal savings after allocation:{" "}
+                  {formatEmployeeCurrency(confirmation.preview.goalSavedAmount)}
+                </p>
+              </>
+            ) : null}
             <fieldset className="reward-destinations">
               <legend>Choose a destination</legend>
               <label>
@@ -229,6 +293,11 @@ export function EmployeeRewards() {
                 Choose a voucher
               </label>
             </fieldset>
+            {noticeMessage ? (
+              <p className="confirmation-notice" role="status">
+                {noticeMessage}
+              </p>
+            ) : null}
             {recoveryMessage ? (
               <p className="recovery-message" role="alert">
                 {recoveryMessage}

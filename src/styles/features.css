@@ -243,11 +243,18 @@
   font-weight: 600;
 }
 
+.confirmation-notice,
 .success-message,
 .recovery-message {
   padding: var(--space-3) var(--space-4);
   border-radius: var(--radius-sm);
   font-weight: 600;
+}
+
+.confirmation-notice {
+  border: 1px solid var(--jem-border);
+  background: var(--jem-cream);
+  color: var(--jem-navy);
 }
 
 .success-message {
