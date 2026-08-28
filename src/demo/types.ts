@@ -1,0 +1,221 @@
+export type AppMode = "employee" | "employer";
+export type EmployeeTab = "overview" | "shifts" | "learn" | "rewards";
+export type EmployerTab = "dashboard" | "opportunity" | "shifts" | "fairness";
+export type OpportunityCategory = "all" | "shift" | "learning" | "reward";
+export type ActionSource = "ui" | "webmcp";
+export type ExpenseKey =
+  | "housing"
+  | "transport"
+  | "food"
+  | "dependants"
+  | "debt"
+  | "airtime"
+  | "other";
+export type ExpenseMap = Record<ExpenseKey, number>;
+export type ShiftStatus = "confirmed" | "available" | "requested";
+export type RewardStatus = "in_progress" | "earned" | "allocated";
+export type RewardDestination = "savings" | "voucher";
+export type ProgrammeStatus = "active" | "draft";
+export type ProgrammeReadiness = "ready" | "review_required";
+export type FairnessSeverity = "medium" | "low";
+export type FairnessReviewState = "open" | "reviewing";
+
+export interface Goal {
+  name: string;
+  emoji: string;
+  targetAmount: number;
+  savedAmount: number;
+  targetDate: string;
+  monthlyContribution: number;
+  isPrivate: boolean;
+}
+
+export interface EmployeeProfile {
+  firstName: string;
+  fullName: string;
+  employerName: string;
+  role: string;
+  hourlyRate: number;
+  payFrequency: "monthly";
+  nextPayday: string;
+  daysToPayday: number;
+  expectedEarnings: number;
+  hoursWorked: number;
+  startDate: string;
+}
+
+export interface Shift {
+  id: string;
+  date: string;
+  startTime: string;
+  endTime: string;
+  site: string;
+  role: string;
+  estimatedEarnings: number;
+  estimateKind: "estimated_before_deductions" | "confirmed_before_deductions";
+  deadline: string | null;
+  status: ShiftStatus;
+  transport: string;
+  eligibility: string;
+  applications: number;
+  spots: number;
+}
+
+export interface LearningOpportunity {
+  id: string;
+  title: string;
+  description: string;
+  category: string;
+  durationMinutes: number;
+  rewardAmount: number;
+  rewardType: "cash" | "voucher";
+  completed: boolean;
+  expiresOn: string;
+}
+
+export interface Reward {
+  id: string;
+  title: string;
+  description: string;
+  amount: number;
+  rewardType: "cash" | "voucher";
+  qualifying: number | null;
+  required: number | null;
+  status: RewardStatus;
+  deadline: string | null;
+  allocatedTo: RewardDestination | null;
+}
+
+export interface EmployerProfile {
+  employerName: string;
+  contactName: string;
+  role: string;
+  totalEmployees: number;
+  activeEmployees: number;
+  goalEngagementPercent: number;
+  dataConfidencePercent: number;
+}
+
+export interface Programme {
+  id: string;
+  name: string;
+  type: "attendance" | "learning" | "extra_shifts";
+  budget: number;
+  spent: number;
+  enrolled: number;
+  participating: number;
+  status: ProgrammeStatus;
+  readiness: ProgrammeReadiness;
+  expiresOn: string | null;
+}
+
+export interface FairnessException {
+  id: string;
+  employeeLabel: string;
+  issue: string;
+  programmeName: string;
+  severity: FairnessSeverity;
+  recordFreshnessHours: number;
+  reviewState: FairnessReviewState;
+}
+
+export interface OpportunityDraft {
+  id: "draft-opportunity";
+  name: string;
+  type: "attendance" | "learning" | "extra_shifts";
+  outcome: string;
+  eligibleSegment: string;
+  qualificationRule: string;
+  startDate: string;
+  endDate: string;
+  rewardType: "cash" | "voucher" | "credits";
+  rewardAmount: number;
+  totalBudget: number;
+  maxPerEmployee: number;
+  exceptionPolicy: string;
+  status: "draft";
+}
+
+export interface OpportunityValidation {
+  draftId: "draft-opportunity";
+  readiness: "ready" | "review_required" | "blocked";
+  rulesClear: boolean;
+  dataAvailable: boolean;
+  dataFresh: boolean;
+  fairnessPassed: boolean;
+  budgetWithinLimit: boolean;
+  eligibleEmployeeCount: number;
+  expectedParticipationPercent: number;
+  estimatedCost: number;
+  maximumExposure: number;
+  unresolvedExceptionCount: number;
+  issues: string[];
+}
+
+export interface ActivityNotice {
+  id: number;
+  source: ActionSource;
+  message: string;
+}
+
+export interface DemoState {
+  mode: AppMode;
+  onboarding: { completed: boolean; step: 1 | 2 | 3 | 4 };
+  employee: {
+    activeTab: EmployeeTab;
+    profile: EmployeeProfile;
+    goal: Goal;
+    expenses: ExpenseMap;
+    shifts: Shift[];
+    learning: LearningOpportunity[];
+    rewards: Reward[];
+  };
+  employer: {
+    activeTab: EmployerTab;
+    profile: EmployerProfile;
+    programmes: Programme[];
+    fairnessExceptions: FairnessException[];
+    fairnessRules: string[];
+    activeDraft: OpportunityDraft | null;
+    validation: OpportunityValidation | null;
+  };
+  activity: ActivityNotice | null;
+}
+
+export interface DemoStore {
+  getState(): DemoState;
+  dispatch(action: DemoAction): void;
+  subscribe(listener: () => void): () => void;
+}
+
+export type DemoAction =
+  | { type: "demo/reset" }
+  | { type: "navigation/set-mode"; mode: AppMode }
+  | { type: "navigation/set-employee-tab"; tab: EmployeeTab }
+  | { type: "navigation/set-employer-tab"; tab: EmployerTab }
+  | { type: "onboarding/set-step"; step: 1 | 2 | 3 | 4 }
+  | { type: "onboarding/complete" }
+  | { type: "employee/replace-goal"; goal: Goal; source: ActionSource }
+  | {
+      type: "employee/replace-expenses";
+      expenses: ExpenseMap;
+      source: ActionSource;
+    }
+  | { type: "employee/request-shift"; shiftId: string; source: ActionSource }
+  | {
+      type: "employee/allocate-reward";
+      rewardId: string;
+      destination: RewardDestination;
+      source: ActionSource;
+    }
+  | {
+      type: "employer/save-draft";
+      draft: OpportunityDraft;
+      source: ActionSource;
+    }
+  | {
+      type: "employer/set-validation";
+      validation: OpportunityValidation;
+      source: ActionSource;
+    }
+  | { type: "activity/dismiss" };
