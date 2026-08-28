@@ -99,4 +99,106 @@ describe("employee capabilities", () => {
     });
     expect(store.getState().employee.expenses.food).toBe(850);
   });
+
+  it("rejects expenses when the UI source is omitted without dispatching", () => {
+    const store = createDemoStore();
+    const capabilities = createEmployeeCapabilities(store);
+
+    expect(
+      capabilities.updateExpenses({
+        ...store.getState().employee.expenses,
+        food: 850,
+      }),
+    ).toMatchObject({
+      ok: false,
+      error: { code: "UNSUPPORTED_WEBMCP" },
+    });
+    expect(store.getState().employee.expenses.food).toBe(800);
+    expect(store.getState().activity).toBeNull();
+  });
+
+  it("rejects malformed shift requests without dispatching", () => {
+    const store = createDemoStore();
+    const capabilities = createEmployeeCapabilities(store);
+
+    expect(
+      capabilities.requestShift({ shiftId: "shift-sat-rosebank" } as never),
+    ).toMatchObject({
+      ok: false,
+      error: { code: "INVALID_INPUT" },
+    });
+    expect(
+      capabilities.requestShift({ shiftId: "", confirm: true } as never),
+    ).toMatchObject({
+      ok: false,
+      error: { code: "INVALID_INPUT" },
+    });
+    expect(
+      store
+        .getState()
+        .employee.shifts.find((shift) => shift.id === "shift-sat-rosebank")
+        ?.status,
+    ).toBe("available");
+    expect(store.getState().activity).toBeNull();
+  });
+
+  it("rejects malformed reward allocations without dispatching", () => {
+    const store = createDemoStore();
+    const capabilities = createEmployeeCapabilities(store);
+
+    expect(
+      capabilities.allocateReward({
+        rewardId: "reward-safety",
+        destination: "cash",
+        confirm: true,
+      } as never),
+    ).toMatchObject({
+      ok: false,
+      error: { code: "INVALID_INPUT" },
+    });
+    expect(
+      capabilities.allocateReward({
+        rewardId: "reward-safety",
+        destination: "savings",
+      } as never),
+    ).toMatchObject({
+      ok: false,
+      error: { code: "INVALID_INPUT" },
+    });
+    expect(store.getState().employee.goal.savedAmount).toBe(2520);
+    expect(
+      store
+        .getState()
+        .employee.rewards.find((reward) => reward.id === "reward-safety")
+        ?.status,
+    ).toBe("earned");
+    expect(store.getState().activity).toBeNull();
+  });
+
+  it("allows allocation only for an earned and unallocated reward", () => {
+    const initialState = createDemoStore().getState();
+    const store = createDemoStore({
+      ...initialState,
+      employee: {
+        ...initialState.employee,
+        rewards: initialState.employee.rewards.map((reward) =>
+          reward.id === "reward-safety"
+            ? { ...reward, status: "allocated", allocatedTo: null }
+            : reward,
+        ),
+      },
+    });
+
+    expect(
+      createEmployeeCapabilities(store).allocateReward({
+        rewardId: "reward-safety",
+        destination: "savings",
+        confirm: true,
+      }),
+    ).toMatchObject({
+      ok: false,
+      error: { code: "REWARD_NOT_EARNED" },
+    });
+    expect(store.getState().employee.goal.savedAmount).toBe(2520);
+  });
 });

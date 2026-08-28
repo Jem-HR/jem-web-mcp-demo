@@ -162,6 +162,31 @@ function validExpenses(input: UpdateExpensesInput): input is ExpenseMap {
   );
 }
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return value !== null && typeof value === "object";
+}
+
+function validRequestShiftInput(input: unknown): input is RequestShiftInput {
+  return (
+    isRecord(input) &&
+    typeof input.shiftId === "string" &&
+    input.shiftId.trim().length > 0 &&
+    typeof input.confirm === "boolean"
+  );
+}
+
+function validAllocateRewardInput(
+  input: unknown,
+): input is AllocateRewardInput {
+  return (
+    isRecord(input) &&
+    typeof input.rewardId === "string" &&
+    input.rewardId.trim().length > 0 &&
+    (input.destination === "savings" || input.destination === "voucher") &&
+    typeof input.confirm === "boolean"
+  );
+}
+
 function goalChange(state: DemoState, after: Goal): GoalChange {
   const draftState: DemoState = {
     ...state,
@@ -285,7 +310,7 @@ export function createEmployeeCapabilities(
       return appliedResult("Savings goal updated.", change);
     },
 
-    updateExpenses(input, source = "ui") {
+    updateExpenses(input, source = "webmcp") {
       if (source !== "ui") {
         return errorResult(
           "UNSUPPORTED_WEBMCP",
@@ -322,6 +347,14 @@ export function createEmployeeCapabilities(
     },
 
     requestShift(input, source = "webmcp") {
+      if (!validRequestShiftInput(input)) {
+        return errorResult(
+          "INVALID_INPUT",
+          "Enter a valid shift request.",
+          "Provide a shift ID and choose whether to confirm it.",
+        );
+      }
+
       const shift = store
         .getState()
         .employee.shifts.find((candidate) => candidate.id === input.shiftId);
@@ -360,6 +393,14 @@ export function createEmployeeCapabilities(
     },
 
     allocateReward(input, source = "webmcp") {
+      if (!validAllocateRewardInput(input)) {
+        return errorResult(
+          "INVALID_INPUT",
+          "Enter a valid reward allocation.",
+          "Provide a reward ID, savings or voucher destination, and confirmation.",
+        );
+      }
+
       const state = store.getState();
       const reward = state.employee.rewards.find(
         (candidate) => candidate.id === input.rewardId,
@@ -371,18 +412,18 @@ export function createEmployeeCapabilities(
           "Choose a reward from the current opportunities.",
         );
       }
-      if (reward.status === "in_progress") {
-        return errorResult(
-          "REWARD_NOT_EARNED",
-          "This reward has not been earned yet.",
-          "Complete the qualifying activity first.",
-        );
-      }
-      if (reward.status === "allocated" || reward.allocatedTo !== null) {
+      if (reward.allocatedTo !== null) {
         return errorResult(
           "REWARD_ALREADY_ALLOCATED",
           "This reward has already been allocated.",
           "Choose another earned reward.",
+        );
+      }
+      if (reward.status !== "earned") {
+        return errorResult(
+          "REWARD_NOT_EARNED",
+          "This reward has not been earned yet.",
+          "Complete the qualifying activity first.",
         );
       }
 
