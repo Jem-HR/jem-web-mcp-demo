@@ -50,7 +50,7 @@ describe("getAppStatusTool", () => {
     });
   });
 
-  it("rejects invalid input shapes when the caller bypasses the schema", async () => {
+  it("returns redacted invalid-input results when the caller bypasses the schema", async () => {
     const execute = getAppStatusTool.execute as (
       input: unknown,
     ) => Promise<unknown>;
@@ -66,9 +66,20 @@ describe("getAppStatusTool", () => {
     ];
 
     for (const input of invalidInputs) {
-      await expect(execute(input)).rejects.toThrow(
-        "get_app_status received invalid input.",
-      );
+      await expect(execute(input)).resolves.toEqual({
+        ok: false,
+        status: "error",
+        error: {
+          code: "INVALID_INPUT",
+          message: "The tool input is invalid.",
+          recovery: "Use the tool schema and provide only documented fields.",
+        },
+      });
     }
+
+    const redacted = await execute({
+      "sk-protected-key": "sk-protected-value",
+    });
+    expect(JSON.stringify(redacted)).not.toContain("sk-protected");
   });
 });

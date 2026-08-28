@@ -38,4 +38,27 @@ describe("createDemoStore", () => {
       createInitialDemoState().employee.goal,
     );
   });
+
+  it("increments an open shift application once on the first request", () => {
+    const store = createDemoStore();
+    const request = {
+      type: "employee/request-shift" as const,
+      shiftId: "shift-sat-rosebank",
+      source: "webmcp" as const,
+    };
+
+    store.dispatch(request);
+    expect(
+      store
+        .getState()
+        .employee.shifts.find((shift) => shift.id === request.shiftId),
+    ).toMatchObject({ status: "requested", applications: 4 });
+
+    store.dispatch(request);
+    expect(
+      store
+        .getState()
+        .employee.shifts.find((shift) => shift.id === request.shiftId),
+    ).toMatchObject({ status: "requested", applications: 4 });
+  });
 });

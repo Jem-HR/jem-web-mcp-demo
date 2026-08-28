@@ -71,6 +71,13 @@ export interface RequestShiftInput {
 export interface ShiftRequestResult {
   shiftId: string;
   status: "requested";
+  date: string;
+  startTime: string;
+  endTime: string;
+  hours: number;
+  site: string;
+  eligibility: string;
+  deadline: string | null;
   estimatedEarnings: number;
   estimateKind: "estimated_before_deductions";
   alreadyRequested: boolean;
@@ -89,6 +96,16 @@ export interface RewardAllocationResult {
   goalSavedAmount: number;
 }
 
+export interface OnboardingPlanInput {
+  goal: Omit<UpdateSavingsGoalInput, "confirm">;
+  expenses: UpdateExpensesInput;
+}
+
+export interface OnboardingPlanResult {
+  goal: GoalChange;
+  affordability: AffordabilitySummary;
+}
+
 export interface EmployeeCapabilities {
   getDashboard(): CapabilityResult<EmployeeDashboard>;
   updateSavingsGoal(
@@ -99,6 +116,10 @@ export interface EmployeeCapabilities {
     input: UpdateExpensesInput,
     source?: ActionSource,
   ): CapabilityResult<AffordabilitySummary>;
+  completeOnboardingPlan(
+    input: OnboardingPlanInput,
+    source?: ActionSource,
+  ): CapabilityResult<OnboardingPlanResult>;
   listOpportunities(input?: {
     category?: OpportunityCategory;
   }): CapabilityResult<EmployeeOpportunity[]>;
@@ -207,6 +228,16 @@ function shiftRequestResult(
   return {
     shiftId: shift.id,
     status: "requested",
+    date: shift.date,
+    startTime: shift.startTime,
+    endTime: shift.endTime,
+    hours:
+      (Date.parse(`1970-01-01T${shift.endTime}:00Z`) -
+        Date.parse(`1970-01-01T${shift.startTime}:00Z`)) /
+      3_600_000,
+    site: shift.site,
+    eligibility: shift.eligibility,
+    deadline: shift.deadline,
     estimatedEarnings: shift.estimatedEarnings,
     estimateKind: "estimated_before_deductions",
     alreadyRequested,
@@ -303,7 +334,9 @@ export function createEmployeeCapabilities(
       };
       const change = goalChange(store.getState(), after);
       if (!input.confirm) {
-        return previewResult("Savings goal update ready to confirm.", change);
+        return previewResult("Savings goal update ready to confirm.", change, [
+          "This changes private employee demo data only; it does not move money.",
+        ]);
       }
 
       store.dispatch({ type: "employee/replace-goal", goal: after, source });
@@ -335,6 +368,56 @@ export function createEmployeeCapabilities(
         "Monthly expenses updated.",
         selectAffordability(store.getState()),
       );
+    },
+
+    completeOnboardingPlan(input, source = "ui") {
+      const goalInput: UpdateSavingsGoalInput = {
+        ...input.goal,
+        confirm: true,
+      };
+      if (!validGoal(goalInput)) {
+        return errorResult(
+          "INVALID_INPUT",
+          "Enter a valid savings goal.",
+          "Provide a name, valid amounts and a future target date.",
+        );
+      }
+      if (source !== "ui") {
+        return errorResult(
+          "UNSUPPORTED_WEBMCP",
+          "Onboarding can only be completed in the employee app.",
+          "Complete onboarding from the employee app.",
+        );
+      }
+      if (!validExpenses(input.expenses)) {
+        return errorResult(
+          "INVALID_INPUT",
+          "Enter valid monthly expenses.",
+          "Provide all seven expense amounts as zero or more.",
+        );
+      }
+
+      const goal: Goal = { ...input.goal };
+      const state = store.getState();
+      const nextState: DemoState = {
+        ...state,
+        employee: {
+          ...state.employee,
+          goal,
+          expenses: { ...input.expenses },
+        },
+      };
+      const result: OnboardingPlanResult = {
+        goal: goalChange(state, goal),
+        affordability: selectAffordability(nextState),
+      };
+      store.dispatch({
+        type: "employee/complete-onboarding",
+        goal,
+        expenses: input.expenses,
+        source,
+      });
+      return appliedResult("Onboarding plan saved.", result);
     },
 
     listOpportunities(input = {}) {
@@ -381,7 +464,9 @@ export function createEmployeeCapabilities(
 
       const result = shiftRequestResult(shift, false);
       if (!input.confirm) {
-        return previewResult("Shift request ready to confirm.", result);
+        return previewResult("Shift request ready to confirm.", result, [
+          "This records a request only; it does not assign the shift or guarantee earnings.",
+        ]);
       }
 
       store.dispatch({
@@ -438,7 +523,9 @@ export function createEmployeeCapabilities(
         goalSavedAmount,
       };
       if (!input.confirm) {
-        return previewResult("Reward allocation ready to confirm.", result);
+        return previewResult("Reward allocation ready to confirm.", result, [
+          "This changes only the local demo allocation; it does not issue a reward or move money.",
+        ]);
       }
 
       store.dispatch({

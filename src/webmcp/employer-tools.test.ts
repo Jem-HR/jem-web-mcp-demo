@@ -5,13 +5,13 @@ import { createInitialDemoState } from "../demo/fixtures";
 import { createDemoStore } from "../demo/store";
 import { createEmployerTools } from "./employer-tools";
 
-const STALE_STATE = {
+const INVALID_INPUT = {
   ok: false,
   status: "error",
   error: {
-    code: "STALE_STATE",
-    message: "The demo could not complete that action.",
-    recovery: "Refresh or reset the demo and try again.",
+    code: "INVALID_INPUT",
+    message: "The tool input is invalid.",
+    recovery: "Use the tool schema and provide only documented fields.",
   },
 };
 
@@ -215,7 +215,7 @@ describe("createEmployerTools", () => {
     );
   });
 
-  it("returns fixed stale state for unknown keys, invalid shapes, fields, enums, dates, and non-finite numbers", async () => {
+  it("returns fixed invalid input for unknown keys, invalid shapes, fields, enums, dates, and non-finite numbers", async () => {
     const tools = createEmployerTools(
       createDemoCapabilities(createDemoStore()).employer,
     );
@@ -277,7 +277,7 @@ describe("createEmployerTools", () => {
     for (const [name, inputs] of cases) {
       const tool = toolByName(tools, name);
       for (const input of inputs) {
-        await expect(executeTool(tool, input)).resolves.toEqual(STALE_STATE);
+        await expect(executeTool(tool, input)).resolves.toEqual(INVALID_INPUT);
       }
     }
   });
@@ -321,6 +321,9 @@ describe("createEmployerTools", () => {
     await expect(executeTool(createDraft, validDraft)).resolves.toMatchObject({
       ok: true,
       status: "preview",
+      warnings: [
+        "This saves a draft only; it does not launch or approve a programme.",
+      ],
     });
     expect(store.getState().employer.activeDraft).toBeNull();
     await expect(

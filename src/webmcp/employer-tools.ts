@@ -6,12 +6,13 @@ import {
   assertFiniteNumber,
   assertString,
   safeToolExecute,
+  throwToolInputValidationError,
 } from "./tool-helpers";
 
 function assertIsoCalendarDate(value: unknown, toolName: string): string {
   const date = assertString(value, toolName);
   if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
-    throw new TypeError(`${toolName} received invalid input.`);
+    return throwToolInputValidationError(toolName);
   }
 
   const parsed = new Date(`${date}T00:00:00.000Z`);
@@ -19,7 +20,7 @@ function assertIsoCalendarDate(value: unknown, toolName: string): string {
     Number.isNaN(parsed.getTime()) ||
     parsed.toISOString().slice(0, 10) !== date
   ) {
-    throw new TypeError(`${toolName} received invalid input.`);
+    return throwToolInputValidationError(toolName);
   }
 
   return date;

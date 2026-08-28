@@ -269,6 +269,15 @@ describe("application accessibility", () => {
     expect(allCss).toMatch(
       /\.tabs__tab:focus-visible \{[^}]*scroll-margin-inline/,
     );
+    const tablistRule = normalise(componentsCss).match(
+      /\.tabs__list \{[^}]*\}/,
+    )?.[0];
+    const tablistPadding = tablistRule?.match(/padding: ([\d.]+)px/)?.[1];
+    const tablistScrollPadding = tablistRule?.match(
+      /scroll-padding-inline: ([\d.]+)px/,
+    )?.[1];
+    expect(Number(tablistPadding)).toBeGreaterThanOrEqual(4);
+    expect(Number(tablistScrollPadding)).toBeGreaterThanOrEqual(4);
     expect(allCss).toMatch(/\.dialog__content \{[^}]*overflow-y: auto/);
 
     const responsiveStart = allCss.indexOf("@media (max-width: 47.5rem)");

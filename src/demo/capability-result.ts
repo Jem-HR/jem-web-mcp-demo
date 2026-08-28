@@ -13,8 +13,15 @@ export type CapabilityErrorCode =
 export type CapabilityResult<T> =
   | {
       ok: true;
-      status: "read" | "preview" | "applied";
+      status: "read" | "applied";
       summary: string;
+      data: T;
+    }
+  | {
+      ok: true;
+      status: "preview";
+      summary: string;
+      warnings: string[];
       data: T;
     }
   | {
@@ -23,7 +30,10 @@ export type CapabilityResult<T> =
       error: { code: CapabilityErrorCode; message: string; recovery: string };
     };
 
-type SuccessStatus = Extract<CapabilityResult<unknown>, { ok: true }>["status"];
+type SuccessStatus = Exclude<
+  Extract<CapabilityResult<unknown>, { ok: true }>["status"],
+  "preview"
+>;
 
 function success<T>(
   status: SuccessStatus,
@@ -40,8 +50,15 @@ export function readResult<T>(summary: string, data: T): CapabilityResult<T> {
 export function previewResult<T>(
   summary: string,
   data: T,
+  warnings: readonly string[],
 ): CapabilityResult<T> {
-  return success("preview", summary, data);
+  return {
+    ok: true,
+    status: "preview",
+    summary,
+    warnings: [...warnings],
+    data,
+  };
 }
 
 export function appliedResult<T>(

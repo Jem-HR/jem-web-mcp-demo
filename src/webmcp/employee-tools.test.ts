@@ -8,13 +8,13 @@ import { errorResult } from "../demo/capability-result";
 import { createDemoStore } from "../demo/store";
 import { createEmployeeTools } from "./employee-tools";
 
-const STALE_STATE = {
+const INVALID_INPUT = {
   ok: false,
   status: "error",
   error: {
-    code: "STALE_STATE",
-    message: "The demo could not complete that action.",
-    recovery: "Refresh or reset the demo and try again.",
+    code: "INVALID_INPUT",
+    message: "The tool input is invalid.",
+    recovery: "Use the tool schema and provide only documented fields.",
   },
 };
 
@@ -180,7 +180,28 @@ describe("createEmployeeTools", () => {
         shiftId: "shift-sat-rosebank",
         confirm: false,
       }),
-    ).resolves.toMatchObject({ ok: true, status: "preview" });
+    ).resolves.toEqual({
+      ok: true,
+      status: "preview",
+      summary: "Shift request ready to confirm.",
+      warnings: [
+        "This records a request only; it does not assign the shift or guarantee earnings.",
+      ],
+      data: {
+        shiftId: "shift-sat-rosebank",
+        status: "requested",
+        date: "2026-09-05",
+        startTime: "08:00",
+        endTime: "17:00",
+        hours: 9,
+        site: "Rosebank Mall",
+        eligibility: "Active Pick n Pay retail employee at the listed site",
+        deadline: "2026-09-04",
+        estimatedEarnings: 480,
+        estimateKind: "estimated_before_deductions",
+        alreadyRequested: false,
+      },
+    });
     expect(
       store
         .getState()
@@ -201,7 +222,7 @@ describe("createEmployeeTools", () => {
     ).toBe("requested");
   });
 
-  it("returns a fixed stale-state result for every runtime schema bypass", async () => {
+  it("returns a fixed invalid-input result for every runtime schema bypass", async () => {
     const tools = createEmployeeTools(
       createEmployeeCapabilities(createDemoStore()),
     );
@@ -261,7 +282,7 @@ describe("createEmployeeTools", () => {
     for (const [name, inputs] of cases) {
       const tool = toolByName(tools, name);
       for (const input of inputs) {
-        await expect(executeTool(tool, input)).resolves.toEqual(STALE_STATE);
+        await expect(executeTool(tool, input)).resolves.toEqual(INVALID_INPUT);
       }
     }
   });
@@ -321,6 +342,7 @@ describe("createEmployeeTools", () => {
         throw new Error("goal update must not run after dashboard failure");
       },
       updateExpenses: () => dashboardFailure,
+      completeOnboardingPlan: () => dashboardFailure,
       listOpportunities: () => dashboardFailure,
       requestShift: () => dashboardFailure,
       allocateReward: () => dashboardFailure,
@@ -350,20 +372,35 @@ describe("createEmployeeTools", () => {
     await expect(executeTool(updateGoal, goalInput)).resolves.toMatchObject({
       ok: true,
       status: "preview",
+      warnings: [
+        "This changes private employee demo data only; it does not move money.",
+      ],
     });
     await expect(
       executeTool(requestShift, {
         shiftId: "shift-sat-rosebank",
         confirm: false,
       }),
-    ).resolves.toMatchObject({ ok: true, status: "preview" });
+    ).resolves.toMatchObject({
+      ok: true,
+      status: "preview",
+      warnings: [
+        "This records a request only; it does not assign the shift or guarantee earnings.",
+      ],
+    });
     await expect(
       executeTool(allocateReward, {
         rewardId: "reward-safety",
         destination: "savings",
         confirm: false,
       }),
-    ).resolves.toMatchObject({ ok: true, status: "preview" });
+    ).resolves.toMatchObject({
+      ok: true,
+      status: "preview",
+      warnings: [
+        "This changes only the local demo allocation; it does not issue a reward or move money.",
+      ],
+    });
     expect(store.getState()).toEqual(initialState);
 
     await expect(

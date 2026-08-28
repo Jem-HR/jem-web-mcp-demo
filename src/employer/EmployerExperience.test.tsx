@@ -241,7 +241,7 @@ describe("EmployerExperience", () => {
       target: { value: "300" },
     });
     fireEvent.change(screen.getByLabelText("Total budget"), {
-      target: { value: "130000" },
+      target: { value: "150000" },
     });
     fireEvent.change(screen.getByLabelText("Maximum per employee"), {
       target: { value: "350" },
@@ -259,7 +259,7 @@ describe("EmployerExperience", () => {
       endDate: "2026-11-30",
       rewardType: "voucher",
       rewardAmount: 300,
-      totalBudget: 130000,
+      totalBudget: 150000,
       maxPerEmployee: 350,
       exceptionPolicy: "Approved training outages enter manager review",
     } as const;
@@ -286,7 +286,7 @@ describe("EmployerExperience", () => {
       ),
     ).toBeInTheDocument();
     expect(within(preview).getByText(/R\s*300 voucher/i)).toBeInTheDocument();
-    expect(within(preview).getByText(/R\s*130\s*000/)).toBeInTheDocument();
+    expect(within(preview).getByText(/R\s*150\s*000/)).toBeInTheDocument();
     expect(within(preview).getByText(/R\s*350/)).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: /save draft/i }));
@@ -334,8 +334,8 @@ describe("EmployerExperience", () => {
     expect(within(fairness!).getByText("No")).toBeInTheDocument();
     expect(within(validation).getByText("412")).toBeInTheDocument();
     expect(within(validation).getByText("68%")).toBeInTheDocument();
-    expect(within(validation).getByText(/R\s*70\s*040/)).toBeInTheDocument();
-    expect(within(validation).getByText(/R\s*103\s*000/)).toBeInTheDocument();
+    expect(within(validation).getByText(/R\s*84\s*048/)).toBeInTheDocument();
+    expect(within(validation).getByText(/R\s*144\s*200/)).toBeInTheDocument();
     expect(
       within(validation).getByText(/3 fairness exceptions/i),
     ).toBeInTheDocument();

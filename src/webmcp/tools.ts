@@ -2,7 +2,7 @@ import { getAppStatus } from "../app/app-status";
 import type { DemoCapabilities } from "../demo/capabilities";
 import { createEmployeeTools } from "./employee-tools";
 import { createEmployerTools } from "./employer-tools";
-import { assertClosedObject } from "./tool-helpers";
+import { assertClosedObject, safeToolExecute } from "./tool-helpers";
 
 export const getAppStatusTool = {
   name: "get_app_status",
@@ -19,8 +19,10 @@ export const getAppStatusTool = {
     readOnlyHint: true,
   },
   async execute(input) {
-    assertClosedObject(input, [], "get_app_status");
-    return getAppStatus();
+    return safeToolExecute(() => {
+      assertClosedObject(input, [], "get_app_status");
+      return getAppStatus();
+    });
   },
 } satisfies WebMCP.ModelContextTool;
 

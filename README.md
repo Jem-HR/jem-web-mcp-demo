@@ -1,6 +1,6 @@
 # Jem Unlocked
 
-Jem Unlocked is a complete, deterministic React prototype for the [OpenAI WebMCP Challenge](https://openai.com/webmcp-challenge/). It demonstrates a shared, resettable experience for Nomsa’s employee journey and Sipho’s employer journey, with the same domain capabilities available to the UI and WebMCP tools.
+Jem Unlocked is a complete, deterministic React prototype for the [OpenAI WebMCP Challenge](https://openai.com/webmcp-challenge/). It demonstrates a shared, resettable experience for Nomsa’s employee journey and Sipho’s employer journey. UI interactions and WebMCP tools use a shared capability layer, with the documented exception that private expense updates remain UI-only.
 
 It is not a production Jem service. Read the local [design specification](docs/superpowers/specs/2026-08-28-jem-unlocked-prototype-design.md) and [implementation plan](docs/superpowers/plans/2026-08-28-jem-unlocked-prototype.md) for the agreed scope and implementation record.
 

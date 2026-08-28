@@ -25,12 +25,21 @@ describe("employer capabilities", () => {
 
     expect(
       capabilities.createOpportunityDraft({ ...validDraft, confirm: false }),
-    ).toMatchObject({ ok: true, status: "preview" });
+    ).toMatchObject({
+      ok: true,
+      status: "preview",
+      warnings: [
+        "This saves a draft only; it does not launch or approve a programme.",
+      ],
+    });
     expect(store.getState().employer.activeDraft).toBeNull();
 
-    expect(
-      capabilities.createOpportunityDraft({ ...validDraft, confirm: true }),
-    ).toMatchObject({ ok: true, status: "applied" });
+    const applied = capabilities.createOpportunityDraft({
+      ...validDraft,
+      confirm: true,
+    });
+    expect(applied).toMatchObject({ ok: true, status: "applied" });
+    expect(applied).not.toHaveProperty("warnings");
     expect(store.getState().employer.activeDraft).toMatchObject({
       id: "draft-opportunity",
       status: "draft",
@@ -127,20 +136,28 @@ describe("employer capabilities", () => {
     expect(store.getState().activity).toBeNull();
   });
 
-  it("validates fairness and blocks a budget below maximum exposure", () => {
+  it("blocks a budget below the draft-derived maximum exposure", () => {
     const store = createDemoStore();
     const capabilities = createEmployerCapabilities(store);
     capabilities.createOpportunityDraft({
       ...validDraft,
-      totalBudget: 50000,
+      rewardAmount: 100,
+      maxPerEmployee: 120,
+      totalBudget: 49000,
       confirm: true,
     });
 
     expect(
       capabilities.validateOpportunity({ draftId: "draft-opportunity" }),
-    ).toMatchObject({
+    ).toEqual({
       ok: false,
-      error: { code: "BUDGET_EXCEEDED" },
+      status: "error",
+      error: {
+        code: "BUDGET_EXCEEDED",
+        message: "The total budget is below the maximum possible exposure.",
+        recovery:
+          "Increase the budget to at least R49,440 or reduce eligible reach or the maximum per employee.",
+      },
     });
     expect(store.getState().employer.validation).toBeNull();
   });
@@ -176,6 +193,32 @@ describe("employer capabilities", () => {
     expect(
       capabilities.validateOpportunity({ draftId: "missing" }),
     ).toMatchObject({ ok: false, error: { code: "NOT_FOUND" } });
+  });
+
+  it("derives rounded cost and exposure from multiple active draft values", () => {
+    const store = createDemoStore();
+    const capabilities = createEmployerCapabilities(store);
+    capabilities.createOpportunityDraft({
+      ...validDraft,
+      rewardAmount: 127.5,
+      maxPerEmployee: 300,
+      totalBudget: 123600,
+      confirm: true,
+    });
+
+    expect(
+      capabilities.validateOpportunity({ draftId: "draft-opportunity" }),
+    ).toMatchObject({
+      ok: true,
+      status: "applied",
+      data: {
+        readiness: "review_required",
+        budgetWithinLimit: true,
+        estimatedCost: 35720,
+        maximumExposure: 123600,
+        issues: ["3 fairness exceptions require review before launch."],
+      },
+    });
   });
 
   it("keeps the fixed review-required validation DTO when injected exceptions are empty", () => {

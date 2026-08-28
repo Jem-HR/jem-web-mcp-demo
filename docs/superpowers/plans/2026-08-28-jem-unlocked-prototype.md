@@ -104,7 +104,7 @@
 - Consumes: no new feature interfaces; keep existing app code compiling.
 - Produces: `DemoState`, `DemoAction`, `DemoStore`, `createInitialDemoState()`, `demoReducer()`, `createDemoStore()`, `selectGoalProgress()`, `selectAffordability()`, `selectEmployeeDashboard()`, and `selectEmployerDashboard()`.
 
-- [ ] **Step 1: Write failing fixture, reducer, store, and selector tests**
+- [x] **Step 1: Write failing fixture, reducer, store, and selector tests**
 
 ```ts
 // src/demo/store.test.ts
@@ -191,13 +191,13 @@ describe("demo selectors", () => {
 });
 ```
 
-- [ ] **Step 2: Run the focused tests and verify that imports fail**
+- [x] **Step 2: Run the focused tests and verify that imports fail**
 
 Run: `mise exec node@22.23.2 -- npm test -- src/demo/store.test.ts src/demo/selectors.test.ts`
 
 Expected: FAIL because the demo modules do not exist.
 
-- [ ] **Step 3: Implement domain types, 2026 fixtures, pure reducer, store, and selectors**
+- [x] **Step 3: Implement domain types, 2026 fixtures, pure reducer, store, and selectors**
 
 Define the stable contracts in `types.ts`:
 
@@ -281,7 +281,7 @@ export function createDemoStore(
 }
 ```
 
-- [ ] **Step 4: Run focused tests and the existing suite**
+- [x] **Step 4: Run focused tests and the existing suite**
 
 Run: `mise exec node@22.23.2 -- npm test -- src/demo/store.test.ts src/demo/selectors.test.ts`
 
@@ -291,7 +291,7 @@ Run: `mise exec node@22.23.2 -- npm test`
 
 Expected: existing foundation tests and new demo tests PASS.
 
-- [ ] **Step 5: Commit the domain foundation**
+- [x] **Step 5: Commit the domain foundation**
 
 ```bash
 git add src/demo
@@ -313,7 +313,7 @@ git commit -m "feat: model the Jem Unlocked demo state"
 - Consumes: `DemoStore`, `Goal`, `OpportunityCategory`, and demo selectors from Task 1.
 - Produces: `CapabilityResult<T>`, `CapabilityErrorCode`, `UpdateSavingsGoalInput`, `RequestShiftInput`, `AllocateRewardInput`, `EmployeeCapabilities`, and `createEmployeeCapabilities(store)`.
 
-- [ ] **Step 1: Write failing tests for reads, privacy, preview, application, and invalid transitions**
+- [x] **Step 1: Write failing tests for reads, privacy, preview, application, and invalid transitions**
 
 ```ts
 import { describe, expect, it } from "vitest";
@@ -417,13 +417,13 @@ describe("employee capabilities", () => {
 });
 ```
 
-- [ ] **Step 2: Run the employee capability test and verify failure**
+- [x] **Step 2: Run the employee capability test and verify failure**
 
 Run: `mise exec node@22.23.2 -- npm test -- src/demo/employee-capabilities.test.ts`
 
 Expected: FAIL because `createEmployeeCapabilities` does not exist.
 
-- [ ] **Step 3: Implement result constructors and the exact employee capability surface**
+- [x] **Step 3: Implement result constructors and the exact employee capability surface**
 
 ```ts
 export type CapabilityErrorCode =
@@ -477,13 +477,13 @@ export interface EmployeeCapabilities {
 
 Define `type ActionSource = "ui" | "webmcp"`; mutation methods default it to `"webmcp"`. Validate finite non-negative money values, a target greater than zero, saved amount no greater than target, non-empty names, ISO target dates after the 2026-08-28 demo date, existing IDs, and reward state. Every tool-exposed mutation with `confirm: false` returns a preview without dispatch. `updateExpenses` is UI-only and validates all seven non-negative values before dispatch. `listOpportunities` returns benefit, estimate/confirmation status, effort, eligibility, expiry, and state for every record.
 
-- [ ] **Step 4: Run employee capability tests and all demo tests**
+- [x] **Step 4: Run employee capability tests and all demo tests**
 
 Run: `mise exec node@22.23.2 -- npm test -- src/demo/employee-capabilities.test.ts src/demo/store.test.ts src/demo/selectors.test.ts`
 
 Expected: PASS.
 
-- [ ] **Step 5: Commit employee capabilities**
+- [x] **Step 5: Commit employee capabilities**
 
 ```bash
 git add src/demo/capability-result.ts src/demo/employee-capabilities.ts src/demo/employee-capabilities.test.ts
@@ -506,7 +506,7 @@ git commit -m "feat: add guarded employee capabilities"
 - Consumes: `DemoStore`, result constructors, programme selectors, and employee capabilities from Tasks 1-2.
 - Produces: `EmployerCapabilities`, `CreateOpportunityDraftInput`, `ProgrammeFilter`, `FairnessFilter`, `DemoCapabilities`, and `createDemoCapabilities(store)`.
 
-- [ ] **Step 1: Write failing tests for employer reads, draft confirmation, validation, budget checks, and privacy**
+- [x] **Step 1: Write failing tests for employer reads, draft confirmation, validation, budget checks, and privacy**
 
 ```ts
 import { describe, expect, it } from "vitest";
@@ -590,13 +590,13 @@ describe("employer privacy boundary", () => {
 });
 ```
 
-- [ ] **Step 2: Run focused tests and verify failure**
+- [x] **Step 2: Run focused tests and verify failure**
 
 Run: `mise exec node@22.23.2 -- npm test -- src/demo/employer-capabilities.test.ts src/demo/privacy.test.ts`
 
 Expected: FAIL because employer and combined capability factories do not exist.
 
-- [ ] **Step 3: Implement employer capabilities and the combined facade**
+- [x] **Step 3: Implement employer capabilities and the combined facade**
 
 ```ts
 export interface EmployerCapabilities {
@@ -633,13 +633,13 @@ export function createDemoCapabilities(store: DemoStore): DemoCapabilities {
 
 Draft validation checks every required string, ISO date order, positive reward and budget values, reward amount at or below per-employee maximum, and maximum exposure of `eligibleEmployeeCount * maxPerEmployee` at or below total budget. Successful validation returns readiness `review_required` because three fixture exceptions remain unresolved; it cannot launch or approve a programme.
 
-- [ ] **Step 4: Run employer, privacy, and full demo tests**
+- [x] **Step 4: Run employer, privacy, and full demo tests**
 
 Run: `mise exec node@22.23.2 -- npm test -- src/demo`
 
 Expected: PASS.
 
-- [ ] **Step 5: Commit employer capabilities**
+- [x] **Step 5: Commit employer capabilities**
 
 ```bash
 git add src/demo
@@ -680,7 +680,7 @@ git commit -m "feat: add privacy-safe employer capabilities"
 - Consumes: `createDemoStore()`, `createDemoCapabilities()`, `WebMcpStatus`, and the existing readiness hook.
 - Produces: `DemoProvider`, `useDemoStore()`, `useDemoCapabilities()`, `useDemoSelector(selector)`, `AppShell`, and reusable component props.
 
-- [ ] **Step 1: Replace shell tests with failing provider, reset, brand, and dialog tests**
+- [x] **Step 1: Replace shell tests with failing provider, reset, brand, and dialog tests**
 
 ```tsx
 // src/app/App.test.tsx
@@ -739,13 +739,13 @@ it("labels, closes, and restores focus", () => {
 });
 ```
 
-- [ ] **Step 2: Run the component and app tests and verify failure**
+- [x] **Step 2: Run the component and app tests and verify failure**
 
 Run: `mise exec node@22.23.2 -- npm test -- src/demo/DemoProvider.test.tsx src/components/Dialog.test.tsx src/app/App.test.tsx`
 
 Expected: FAIL because the provider, components, and new shell do not exist.
 
-- [ ] **Step 3: Implement stable provider hooks and shared components**
+- [x] **Step 3: Implement stable provider hooks and shared components**
 
 ```tsx
 const StoreContext = createContext<DemoStore | null>(null);
@@ -777,7 +777,7 @@ export function useDemoSelector<T>(selector: (state: DemoState) => T): T {
 
 `Dialog` records `document.activeElement`, focuses its close button on open, traps Tab within its focusable children, closes on Escape and backdrop click, and restores the recorded focus after close. `Tabs` uses `role="tablist"`, roving `tabIndex`, ArrowLeft/ArrowRight/Home/End, `aria-selected`, and linked tabpanel IDs. `ProgressRing` receives a visible label and renders an SVG with `role="img"` and `<title>`.
 
-- [ ] **Step 4: Implement the branded shell and CSS layers**
+- [x] **Step 4: Implement the branded shell and CSS layers**
 
 `App` becomes:
 
@@ -816,7 +816,7 @@ Begin `tokens.css` with the exact Inter/Manrope stylesheet and define the CSS Je
 }
 ```
 
-- [ ] **Step 5: Run tests and static checks**
+- [x] **Step 5: Run tests and static checks**
 
 Run: `mise exec node@22.23.2 -- npm test -- src/demo/DemoProvider.test.tsx src/components/Dialog.test.tsx src/app/App.test.tsx src/app/app-status.test.ts`
 
@@ -826,7 +826,7 @@ Run: `mise exec node@22.23.2 -- npm run lint`
 
 Expected: PASS.
 
-- [ ] **Step 6: Commit the app shell and shared UI**
+- [x] **Step 6: Commit the app shell and shared UI**
 
 ```bash
 git add src/app src/components src/demo/DemoProvider.tsx src/main.tsx src/styles src/styles.css
@@ -851,7 +851,7 @@ git commit -m "feat: add the Jem Unlocked application shell"
 - Consumes: `DemoStore`, `useDemoSelector`, shared form/button/dialog components, selectors, and `employee.updateSavingsGoal()`.
 - Produces: controlled four-step onboarding and an employee-only goal/expense editor.
 
-- [ ] **Step 1: Write failing onboarding and editor interaction tests**
+- [x] **Step 1: Write failing onboarding and editor interaction tests**
 
 ```tsx
 it("moves through confirmation, goal, expenses, and plan steps", () => {
@@ -888,13 +888,13 @@ it("applies an edited goal through the employee capability", () => {
 });
 ```
 
-- [ ] **Step 2: Run focused tests and verify failure**
+- [x] **Step 2: Run focused tests and verify failure**
 
 Run: `mise exec node@22.23.2 -- npm test -- src/onboarding/OnboardingFlow.test.tsx src/employee/GoalEditorDialog.test.tsx`
 
 Expected: FAIL because onboarding and editor components do not exist.
 
-- [ ] **Step 3: Implement the four steps with private local drafts**
+- [x] **Step 3: Implement the four steps with private local drafts**
 
 `OnboardingFlow` renders only when `state.onboarding.completed` is false. Keep input drafts local until the final action. Steps are:
 
@@ -938,7 +938,7 @@ export function OnboardingFlow() {
 
 Define the file-local helpers with these exact signatures: `toGoalInput(goal: Goal): Omit<UpdateSavingsGoalInput, "confirm">`, `renderOnboardingStep(args: OnboardingStepArgs): ReactNode`, and `completeOnboarding(args: CompleteOnboardingArgs): void`. `renderOnboardingStep` switches exhaustively over steps 1-4; `completeOnboarding` runs both capability calls, displays the returned recovery message if either fails, and dispatches `onboarding/complete` only after both succeed.
 
-- [ ] **Step 4: Implement `GoalEditorDialog` with goal and expense tabs**
+- [x] **Step 4: Implement `GoalEditorDialog` with goal and expense tabs**
 
 Use `Tabs` and `Dialog`; goal save calls `employee.updateSavingsGoal({ ...draft, confirm: true }, "ui")`, while expense save calls `employee.updateExpenses(expenseDraft, "ui")`. Assert in the existing capability tests that omitted provenance remains `webmcp`.
 
@@ -965,13 +965,13 @@ export function GoalEditorDialog({ open, onClose }: GoalEditorDialogProps) {
 
 Define `editorTabs(goal: Goal, expenses: ExpenseMap, capabilities: DemoCapabilities, onClose: () => void): TabDefinition[]` in the same file. Its two panels contain the fully labelled goal and expense forms and invoke the exact capability calls above.
 
-- [ ] **Step 5: Run focused tests and full suite**
+- [x] **Step 5: Run focused tests and full suite**
 
 Run: `mise exec node@22.23.2 -- npm test -- src/onboarding src/employee/GoalEditorDialog.test.tsx src/demo/employee-capabilities.test.ts`
 
 Expected: PASS.
 
-- [ ] **Step 6: Commit onboarding and editing**
+- [x] **Step 6: Commit onboarding and editing**
 
 ```bash
 git add src/onboarding src/employee/GoalEditorDialog.tsx src/employee/GoalEditorDialog.test.tsx src/app/AppShell.tsx src/demo src/styles/features.css
@@ -998,7 +998,7 @@ git commit -m "feat: add employee onboarding and goal editing"
 - Consumes: employee selectors and capabilities, `Tabs`, `Card`, `ProgressRing`, `StatusBadge`, `Button`, and `GoalEditorDialog`.
 - Produces: complete overview/shifts/learn/rewards employee UI and visible updates from shared state.
 
-- [ ] **Step 1: Write failing tests for default content, tab navigation, shift request, and reward allocation**
+- [x] **Step 1: Write failing tests for default content, tab navigation, shift request, and reward allocation**
 
 ```tsx
 describe("EmployeeExperience", () => {
@@ -1038,13 +1038,13 @@ describe("EmployeeExperience", () => {
 });
 ```
 
-- [ ] **Step 2: Run the employee experience test and verify failure**
+- [x] **Step 2: Run the employee experience test and verify failure**
 
 Run: `mise exec node@22.23.2 -- npm test -- src/employee/EmployeeExperience.test.tsx`
 
 Expected: FAIL because the employee experience does not exist.
 
-- [ ] **Step 3: Implement overview and tab composition**
+- [x] **Step 3: Implement overview and tab composition**
 
 The overview renders goal progress, payday, expected earnings, confirmed shifts, best next action, learning summary, reward progress, and recent activity. The next-action card must contain benefit, effort, eligibility, estimate status, and expiry. Clicking **View shift** selects the Shifts tab through the store.
 
@@ -1080,7 +1080,7 @@ export function EmployeeExperience() {
 }
 ```
 
-- [ ] **Step 4: Implement shifts, learning, rewards, and confirmation dialogs**
+- [x] **Step 4: Implement shifts, learning, rewards, and confirmation dialogs**
 
 Shift and reward UI mutations call the same capability preview first, display the returned summary in `Dialog`, and call again with `confirm: true` only after the confirmation button. Learning actions remain deterministic display-only because no learning mutation tool is in scope.
 
@@ -1101,13 +1101,13 @@ function confirmShift() {
 }
 ```
 
-- [ ] **Step 5: Run employee, capability, and app tests**
+- [x] **Step 5: Run employee, capability, and app tests**
 
 Run: `mise exec node@22.23.2 -- npm test -- src/employee src/demo/employee-capabilities.test.ts src/app/App.test.tsx`
 
 Expected: PASS.
 
-- [ ] **Step 6: Commit the employee experience**
+- [x] **Step 6: Commit the employee experience**
 
 ```bash
 git add src/employee src/app/AppShell.tsx src/styles/features.css
@@ -1135,7 +1135,7 @@ git commit -m "feat: build the employee goal dashboard"
 - Consumes: employer selectors and capabilities plus shared tabs, cards, fields, status badges, and formatters.
 - Produces: complete employer dashboard/opportunity/shifts/fairness UI with no protected employee data.
 
-- [ ] **Step 1: Write failing employer workflow and privacy tests**
+- [x] **Step 1: Write failing employer workflow and privacy tests**
 
 ```tsx
 it("creates and validates an opportunity draft", () => {
@@ -1166,13 +1166,13 @@ it("does not reveal Nomsa's protected financial values in employer mode", () => 
 });
 ```
 
-- [ ] **Step 2: Run employer tests and verify failure**
+- [x] **Step 2: Run employer tests and verify failure**
 
 Run: `mise exec node@22.23.2 -- npm test -- src/employer/EmployerExperience.test.tsx src/demo/privacy-ui.test.tsx`
 
 Expected: FAIL because employer components do not exist.
 
-- [ ] **Step 3: Implement dashboard, programmes, shifts, and fairness views**
+- [x] **Step 3: Implement dashboard, programmes, shifts, and fairness views**
 
 The dashboard shows 847 total employees, 612 active employees, active programme count, aggregate goal engagement, budget usage, and three anonymised data exceptions. Programme rows show status, readiness, enrolment, participation, budget, and expiry. Fairness records use anonymised labels such as `N. Dlamini`; no personal financial data enters props.
 
@@ -1212,7 +1212,7 @@ export function EmployerExperience() {
 }
 ```
 
-- [ ] **Step 4: Implement draft preview and validation flow**
+- [x] **Step 4: Implement draft preview and validation flow**
 
 Build controlled fields for every `CreateOpportunityDraftInput` property. **Preview draft** calls with `confirm: false`; **Save draft** calls the exact previewed values with `confirm: true`; **Validate programme** calls `validateOpportunity({ draftId })`. Show readiness, rule clarity, data freshness, fairness, eligible count, expected participation, estimated cost, maximum exposure, and unresolved issues.
 
@@ -1236,13 +1236,13 @@ const validateDraft = () =>
   );
 ```
 
-- [ ] **Step 5: Run employer, privacy, and full app tests**
+- [x] **Step 5: Run employer, privacy, and full app tests**
 
 Run: `mise exec node@22.23.2 -- npm test -- src/employer src/demo/privacy.test.ts src/demo/privacy-ui.test.tsx src/app/App.test.tsx`
 
 Expected: PASS.
 
-- [ ] **Step 6: Commit the employer hub**
+- [x] **Step 6: Commit the employer hub**
 
 ```bash
 git add src/employer src/demo/privacy-ui.test.tsx src/app/AppShell.tsx src/styles/features.css
@@ -1263,7 +1263,7 @@ git commit -m "feat: build the employer opportunity hub"
 - Consumes: `CapabilityResult<T>` and the shared `failure()` result constructor.
 - Produces: `assertClosedObject()`, `assertString()`, `assertFiniteNumber()`, `assertBoolean()`, `assertEnum()`, and `safeToolExecute()`.
 
-- [ ] **Step 1: Write failing runtime-validation and safe-execution tests**
+- [x] **Step 1: Write failing runtime-validation and safe-execution tests**
 
 ```ts
 describe("assertClosedObject", () => {
@@ -1295,13 +1295,13 @@ it("contains unexpected failures behind a stable result", () => {
 });
 ```
 
-- [ ] **Step 2: Run helper tests and verify failure**
+- [x] **Step 2: Run helper tests and verify failure**
 
 Run: `mise exec node@22.23.2 -- npm test -- src/webmcp/tool-helpers.test.ts`
 
 Expected: FAIL because the helper module does not exist.
 
-- [ ] **Step 3: Implement strict field helpers and safe execution**
+- [x] **Step 3: Implement strict field helpers and safe execution**
 
 ```ts
 export function safeToolExecute<T>(
@@ -1321,13 +1321,13 @@ export function safeToolExecute<T>(
 
 Every assertion throws `TypeError("<tool_name> received invalid input.")`; none echoes the rejected value. `assertClosedObject` rejects null, arrays, primitives, and keys outside the supplied allow-list. Field assertions reject empty strings, non-finite numbers, wrong booleans, and enum values outside the supplied readonly tuple.
 
-- [ ] **Step 4: Run helper and existing WebMCP tests**
+- [x] **Step 4: Run helper and existing WebMCP tests**
 
 Run: `mise exec node@22.23.2 -- npm test -- src/webmcp`
 
 Expected: PASS; the existing status tool and registration behaviour remain unchanged.
 
-- [ ] **Step 5: Commit WebMCP helpers**
+- [x] **Step 5: Commit WebMCP helpers**
 
 ```bash
 git add src/webmcp/tool-helpers.ts src/webmcp/tool-helpers.test.ts
@@ -1348,7 +1348,7 @@ git commit -m "test: add safe WebMCP tool helpers"
 - Consumes: `EmployeeCapabilities`, `assertClosedObject()`, and `safeToolExecute()`.
 - Produces: `createEmployeeTools(capabilities): readonly WebMCP.ModelContextTool[]` with five tools in the approved order.
 
-- [ ] **Step 1: Write failing schema and end-to-end state tests**
+- [x] **Step 1: Write failing schema and end-to-end state tests**
 
 ```ts
 it("declares closed employee schemas and updates the live store only after confirmation", async () => {
@@ -1382,13 +1382,13 @@ it("declares closed employee schemas and updates the live store only after confi
 });
 ```
 
-- [ ] **Step 2: Run employee tool tests and verify failure**
+- [x] **Step 2: Run employee tool tests and verify failure**
 
 Run: `mise exec node@22.23.2 -- npm test -- src/webmcp/employee-tools.test.ts`
 
 Expected: FAIL because the employee tool factory does not exist.
 
-- [ ] **Step 3: Implement all five employee tools with exact annotations**
+- [x] **Step 3: Implement all five employee tools with exact annotations**
 
 Use `readOnlyHint: true` for `get_employee_dashboard` and `list_employee_opportunities`; use `readOnlyHint: false` for the three mutation tools. Every execute function validates its runtime input even when callers bypass the JSON schema and returns the capability result unchanged.
 
@@ -1406,13 +1406,13 @@ export function createEmployeeTools(capabilities: EmployeeCapabilities) {
 
 Descriptions must state when the tool reads private employee information, distinguish preview from application, and tell the model to obtain explicit user confirmation before setting `confirm: true`.
 
-- [ ] **Step 4: Run employee tool and capability tests**
+- [x] **Step 4: Run employee tool and capability tests**
 
 Run: `mise exec node@22.23.2 -- npm test -- src/webmcp/employee-tools.test.ts src/demo/employee-capabilities.test.ts`
 
 Expected: PASS.
 
-- [ ] **Step 5: Commit employee tools**
+- [x] **Step 5: Commit employee tools**
 
 ```bash
 git add src/webmcp/employee-tools.ts src/webmcp/employee-tools.test.ts
@@ -1439,7 +1439,7 @@ git commit -m "feat: expose employee workflows through WebMCP"
 - Consumes: `EmployerCapabilities`, WebMCP helpers, employee tools, and registration from Tasks 8-9.
 - Produces: `createEmployerTools(capabilities)` and the final twelve-tool array.
 
-- [ ] **Step 1: Write failing employer schema, privacy, validation, and registration tests**
+- [x] **Step 1: Write failing employer schema, privacy, validation, and registration tests**
 
 ```ts
 it("registers twelve tools in deterministic order", async () => {
@@ -1480,19 +1480,19 @@ it("keeps protected employee values out of every employer tool result", async ()
 });
 ```
 
-- [ ] **Step 2: Run employer and registration tests and verify failure**
+- [x] **Step 2: Run employer and registration tests and verify failure**
 
 Run: `mise exec node@22.23.2 -- npm test -- src/webmcp/employer-tools.test.ts src/webmcp/tools.test.ts src/webmcp/register-tools.test.ts src/app/App.test.tsx`
 
 Expected: FAIL because employer tool factories and the final twelve-tool composition do not exist.
 
-- [ ] **Step 3: Implement six employer tools**
+- [x] **Step 3: Implement six employer tools**
 
 Use `readOnlyHint: true` for `get_employer_dashboard`, `list_programmes`, `list_open_shifts`, and `list_fairness_exceptions`. Use `readOnlyHint: false` for `create_opportunity_draft` and `validate_opportunity`. `validate_opportunity` explicitly states that it performs analysis and updates local validation state but cannot launch or approve a programme.
 
 Every schema is closed and encodes the exact enum/value constraints from `CreateOpportunityDraftInput`. Runtime guards reject unknown keys, primitives, arrays, invalid enums, invalid dates, and non-finite numbers with a fixed `<tool_name> received invalid input.` error before capabilities run.
 
-- [ ] **Step 4: Compose and register the final twelve-tool array**
+- [x] **Step 4: Compose and register the final twelve-tool array**
 
 ```ts
 export function createWebMcpTools(
@@ -1523,13 +1523,13 @@ export function useWebMcpStatus(
 
 `AppShell` gets `DemoCapabilities`, memoises `createWebMcpTools(capabilities)`, and passes that array to `useWebMcpStatus`. Update the app readiness assertion to `WebMCP is ready with 12 tools.` and registration count assertions to `12`.
 
-- [ ] **Step 5: Run all WebMCP, capability, privacy, and app tests**
+- [x] **Step 5: Run all WebMCP, capability, privacy, and app tests**
 
 Run: `mise exec node@22.23.2 -- npm test -- src/webmcp src/demo src/app/App.test.tsx`
 
 Expected: PASS.
 
-- [ ] **Step 6: Commit employer tools and final composition**
+- [x] **Step 6: Commit employer tools and final composition**
 
 ```bash
 git add src/webmcp src/app/AppShell.tsx src/app/App.test.tsx
@@ -1555,7 +1555,7 @@ git commit -m "feat: expose employer workflows through WebMCP"
 - Consumes: complete UI, stable capabilities, and WebMCP tool factories.
 - Produces: tested tool-to-UI synchronisation and accessibility/responsive acceptance coverage.
 
-- [ ] **Step 1: Write failing synchronisation and keyboard tests**
+- [x] **Step 1: Write failing synchronisation and keyboard tests**
 
 ```tsx
 it("reflects a WebMCP tool mutation in the visible dashboard", async () => {
@@ -1604,13 +1604,13 @@ it("supports arrow-key tab navigation", () => {
 });
 ```
 
-- [ ] **Step 2: Run integration tests and verify any missing behaviour**
+- [x] **Step 2: Run integration tests and verify any missing behaviour**
 
 Run: `mise exec node@22.23.2 -- npm test -- src/app/App.integration.test.tsx src/app/accessibility.test.tsx`
 
 Expected: FAIL until the test-only capability exposure seam and any missing keyboard/announcement behaviour are implemented.
 
-- [ ] **Step 3: Add a test-only store seam without production globals**
+- [x] **Step 3: Add a test-only store seam without production globals**
 
 Prefer `DemoProvider` optional props rather than assigning to `window`:
 
@@ -1623,7 +1623,7 @@ interface DemoProviderProps extends PropsWithChildren {
 
 Call `exposeCapabilities` from an effect and keep it out of production call sites. Confirm agent-origin actions announce concise text in the persistent `aria-live="polite"` activity region.
 
-- [ ] **Step 4: Complete responsive and reduced-motion rules**
+- [x] **Step 4: Complete responsive and reduced-motion rules**
 
 At `max-width: 760px`, stack metric grids, make navigation horizontally scrollable without hiding focus, turn data tables into labelled cards, keep dialogs below viewport height with internal scroll, and retain 44px touch targets. Under `prefers-reduced-motion: reduce`, remove smooth scrolling, progress transitions, pulse, scale, and entrance animations.
 
@@ -1672,7 +1672,7 @@ At `max-width: 760px`, stack metric grids, make navigation horizontally scrollab
 }
 ```
 
-- [ ] **Step 5: Run full tests and static checks**
+- [x] **Step 5: Run full tests and static checks**
 
 Run: `mise exec node@22.23.2 -- npm test`
 
@@ -1686,7 +1686,7 @@ Run: `mise exec node@22.23.2 -- npm run format:check`
 
 Expected: PASS after running `mise exec node@22.23.2 -- npm run format` if required.
 
-- [ ] **Step 6: Commit hardening changes**
+- [x] **Step 6: Commit hardening changes**
 
 ```bash
 git add src

@@ -1,7 +1,18 @@
 import { errorResult, type CapabilityResult } from "../demo/capability-result";
 
+export class ToolInputValidationError extends TypeError {
+  constructor(toolName: string) {
+    super(`${toolName} received invalid input.`);
+    this.name = "ToolInputValidationError";
+  }
+}
+
 function invalidInput(toolName: string): never {
-  throw new TypeError(`${toolName} received invalid input.`);
+  throw new ToolInputValidationError(toolName);
+}
+
+export function throwToolInputValidationError(toolName: string): never {
+  return invalidInput(toolName);
 }
 
 export function assertClosedObject(
@@ -84,10 +95,24 @@ export function assertEnum<const T extends readonly string[]>(
 
 export function safeToolExecute<T>(
   execute: () => CapabilityResult<T>,
-): CapabilityResult<T> {
+): CapabilityResult<T>;
+export function safeToolExecute<T>(
+  execute: () => T,
+): T | CapabilityResult<never>;
+export function safeToolExecute<T>(
+  execute: () => T,
+): T | CapabilityResult<never> {
   try {
     return execute();
-  } catch {
+  } catch (error) {
+    if (error instanceof ToolInputValidationError) {
+      return errorResult(
+        "INVALID_INPUT",
+        "The tool input is invalid.",
+        "Use the tool schema and provide only documented fields.",
+      );
+    }
+
     return errorResult(
       "STALE_STATE",
       "The demo could not complete that action.",

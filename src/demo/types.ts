@@ -201,6 +201,12 @@ export type DemoAction =
       expenses: ExpenseMap;
       source: ActionSource;
     }
+  | {
+      type: "employee/complete-onboarding";
+      goal: Goal;
+      expenses: ExpenseMap;
+      source: ActionSource;
+    }
   | { type: "employee/request-shift"; shiftId: string; source: ActionSource }
   | {
       type: "employee/allocate-reward";

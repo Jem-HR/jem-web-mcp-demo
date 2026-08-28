@@ -87,6 +87,18 @@ export function demoReducer(state: DemoState, action: DemoAction): DemoState {
         ),
       };
 
+    case "employee/complete-onboarding":
+      return {
+        ...state,
+        onboarding: { ...state.onboarding, completed: true },
+        employee: {
+          ...state.employee,
+          goal: copyGoal(action.goal),
+          expenses: { ...action.expenses },
+        },
+        activity: activityFor(state, action.source, "Onboarding plan saved."),
+      };
+
     case "employee/request-shift": {
       const shiftIndex = state.employee.shifts.findIndex(
         (shift) => shift.id === action.shiftId,
@@ -95,7 +107,11 @@ export function demoReducer(state: DemoState, action: DemoAction): DemoState {
       if (shift === undefined || shift.status !== "available") return state;
 
       const shifts = [...state.employee.shifts];
-      shifts[shiftIndex] = { ...shift, status: "requested" };
+      shifts[shiftIndex] = {
+        ...shift,
+        status: "requested",
+        applications: shift.applications + 1,
+      };
       return {
         ...state,
         employee: { ...state.employee, shifts },

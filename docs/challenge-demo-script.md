@@ -8,8 +8,8 @@ For every consequential tool, first show the `confirm: false` preview, ask the u
 
 Open the default employee view and call:
 
-```json
-get_employee_dashboard({})
+```javascript
+get_employee_dashboard({});
 ```
 
 Point out the **School Fees** goal, R2,520 saved, next payday, confirmed shifts, and four employee tabs. Explain that the dashboard is private to the employee journey; its exact expenses are not returned.
@@ -18,15 +18,15 @@ Point out the **School Fees** goal, R2,520 saved, next payday, confirmed shifts,
 
 Open **Shifts**, then call:
 
-```json
-list_employee_opportunities({ "category": "shift" })
-request_shift({ "shiftId": "shift-sat-rosebank", "confirm": false })
+```javascript
+list_employee_opportunities({ category: "shift" });
+request_shift({ shiftId: "shift-sat-rosebank", confirm: false });
 ```
 
 Show the preview for the Rosebank Mall shift on 5 September 2026, with estimated earnings before deductions. Ask: “Would you like me to record this shift request?” After an explicit yes, call:
 
-```json
-request_shift({ "shiftId": "shift-sat-rosebank", "confirm": true })
+```javascript
+request_shift({ shiftId: "shift-sat-rosebank", confirm: true });
 ```
 
 Point out that the shift becomes **Requested**. The global activity region announces the change to screen-reader users. It is a request, not a shift assignment.
@@ -35,14 +35,22 @@ Point out that the shift becomes **Requested**. The global activity region annou
 
 Open **Rewards** and use the earned August Safety Award:
 
-```json
-allocate_reward({ "rewardId": "reward-safety", "destination": "savings", "confirm": false })
+```javascript
+allocate_reward({
+  rewardId: "reward-safety",
+  destination: "savings",
+  confirm: false,
+});
 ```
 
 Show the R150 preview and ask: “Would you like me to allocate this earned reward to Nomsa’s savings goal?” After explicit confirmation, call:
 
-```json
-allocate_reward({ "rewardId": "reward-safety", "destination": "savings", "confirm": true })
+```javascript
+allocate_reward({
+  rewardId: "reward-safety",
+  destination: "savings",
+  confirm: true,
+});
 ```
 
 Return to **Overview**. Point out the R2,670 goal total, 45% savings progress, and the visible **Recent activity** card. The global activity region also announces the allocation to screen-reader users. This is demo state only; it does not issue a reward or move money.
@@ -51,9 +59,9 @@ Return to **Overview**. Point out the R2,670 goal total, 45% savings progress, a
 
 Use the header’s **Employer Hub** control, then call:
 
-```json
-get_employer_dashboard({})
-list_programmes({ "status": "all" })
+```javascript
+get_employer_dashboard({});
+list_programmes({ status: "all" });
 ```
 
 Point out aggregate workforce, programme, budget, and data-confidence metrics. Contrast this with the employee view: no goal, savings amount, target, contribution, privacy choice, or expenses are available to employer tools.
@@ -62,48 +70,48 @@ Point out aggregate workforce, programme, budget, and data-confidence metrics. C
 
 Open **Create Opportunity**. First prepare the valid October draft without changing state:
 
-```json
+```javascript
 create_opportunity_draft({
-  "name": "October Reliability Reward",
-  "type": "attendance",
-  "outcome": "Reward on-time attendance during October",
-  "eligibleSegment": "Rosebank retail employees",
-  "qualificationRule": "Arrive on time for every confirmed October shift",
-  "startDate": "2026-10-01",
-  "endDate": "2026-10-31",
-  "rewardType": "cash",
-  "rewardAmount": 250,
-  "totalBudget": 105000,
-  "maxPerEmployee": 250,
-  "exceptionPolicy": "Approved leave and employer roster changes enter review",
-  "confirm": false
-})
+  name: "October Reliability Reward",
+  type: "attendance",
+  outcome: "Reward on-time attendance during October",
+  eligibleSegment: "Rosebank retail employees",
+  qualificationRule: "Arrive on time for every confirmed October shift",
+  startDate: "2026-10-01",
+  endDate: "2026-10-31",
+  rewardType: "cash",
+  rewardAmount: 250,
+  totalBudget: 105000,
+  maxPerEmployee: 250,
+  exceptionPolicy: "Approved leave and employer roster changes enter review",
+  confirm: false,
+});
 ```
 
 Show the preview and ask: “Would you like me to save this October programme draft for review?” After explicit confirmation, call:
 
-```json
+```javascript
 create_opportunity_draft({
-  "name": "October Reliability Reward",
-  "type": "attendance",
-  "outcome": "Reward on-time attendance during October",
-  "eligibleSegment": "Rosebank retail employees",
-  "qualificationRule": "Arrive on time for every confirmed October shift",
-  "startDate": "2026-10-01",
-  "endDate": "2026-10-31",
-  "rewardType": "cash",
-  "rewardAmount": 250,
-  "totalBudget": 105000,
-  "maxPerEmployee": 250,
-  "exceptionPolicy": "Approved leave and employer roster changes enter review",
-  "confirm": true
-})
+  name: "October Reliability Reward",
+  type: "attendance",
+  outcome: "Reward on-time attendance during October",
+  eligibleSegment: "Rosebank retail employees",
+  qualificationRule: "Arrive on time for every confirmed October shift",
+  startDate: "2026-10-01",
+  endDate: "2026-10-31",
+  rewardType: "cash",
+  rewardAmount: 250,
+  totalBudget: 105000,
+  maxPerEmployee: 250,
+  exceptionPolicy: "Approved leave and employer roster changes enter review",
+  confirm: true,
+});
 ```
 
 Then validate the saved draft:
 
-```json
-validate_opportunity({ "draftId": "draft-opportunity" })
+```javascript
+validate_opportunity({ draftId: "draft-opportunity" });
 ```
 
 Point out the saved draft, validation result, and review-required fairness state. Validation changes local analysis only; it does not need confirmation and cannot approve or launch a programme.
@@ -112,8 +120,8 @@ Point out the saved draft, validation result, and review-required fairness state
 
 Open **Fairness & Data** and call:
 
-```json
-list_fairness_exceptions({ "severity": "all" })
+```javascript
+list_fairness_exceptions({ severity: "all" });
 ```
 
 Point out the three open exceptions and their anonymised initial-plus-surname labels. Explain that these labels are illustrative pseudonyms, not a production anonymity guarantee. The prototype can inspect exceptions but cannot resolve them.

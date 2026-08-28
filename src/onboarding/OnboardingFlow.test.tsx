@@ -66,6 +66,7 @@ describe("OnboardingFlow", () => {
 
   it("keeps onboarding incomplete and shows recovery text when goal update fails", () => {
     const store = createOnboardingStore();
+    const before = structuredClone(store.getState());
     renderOnboarding(store);
 
     fireEvent.click(
@@ -76,18 +77,27 @@ describe("OnboardingFlow", () => {
       target: { value: "0" },
     });
     fireEvent.click(screen.getByRole("button", { name: /continue/i }));
+    fireEvent.change(screen.getByLabelText(/food/i), {
+      target: { value: "850" },
+    });
     fireEvent.click(screen.getByRole("button", { name: /continue/i }));
+    const onboardingBeforeSubmit = store.getState().onboarding;
     fireEvent.click(screen.getByRole("button", { name: /open my dashboard/i }));
 
     expect(screen.getByRole("alert")).toHaveTextContent(
       "Provide a name, valid amounts and a future target date.",
     );
-    expect(store.getState().onboarding.completed).toBe(false);
-    expect(store.getState().activity).toBeNull();
+    expect(store.getState().employee.goal).toEqual(before.employee.goal);
+    expect(store.getState().employee.expenses).toEqual(
+      before.employee.expenses,
+    );
+    expect(store.getState().onboarding).toBe(onboardingBeforeSubmit);
+    expect(store.getState().activity).toBe(before.activity);
   });
 
   it("keeps onboarding incomplete and shows recovery text when expense update fails", () => {
     const store = createOnboardingStore();
+    const before = structuredClone(store.getState());
     renderOnboarding(store);
 
     fireEvent.click(
@@ -102,13 +112,17 @@ describe("OnboardingFlow", () => {
       target: { value: "-1" },
     });
     fireEvent.click(screen.getByRole("button", { name: /continue/i }));
+    const onboardingBeforeSubmit = store.getState().onboarding;
     fireEvent.click(screen.getByRole("button", { name: /open my dashboard/i }));
 
     expect(screen.getByRole("alert")).toHaveTextContent(
       "Provide all seven expense amounts as zero or more.",
     );
-    expect(store.getState().onboarding.completed).toBe(false);
-    expect(store.getState().employee.goal.name).toBe("December Fund");
-    expect(store.getState().activity?.source).toBe("ui");
+    expect(store.getState().employee.goal).toEqual(before.employee.goal);
+    expect(store.getState().employee.expenses).toEqual(
+      before.employee.expenses,
+    );
+    expect(store.getState().onboarding).toBe(onboardingBeforeSubmit);
+    expect(store.getState().activity).toBe(before.activity);
   });
 });

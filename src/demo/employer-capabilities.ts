@@ -23,8 +23,6 @@ import type {
 const DEMO_DATE = "2026-08-28";
 const ELIGIBLE_EMPLOYEE_COUNT = 412;
 const EXPECTED_PARTICIPATION_PERCENT = 68;
-const ESTIMATED_COST = 70040;
-const MAXIMUM_EXPOSURE = 103000;
 
 export type ProgrammeFilter = ProgrammeStatus | "all";
 export type FairnessFilter = FairnessSeverity | "all";
@@ -279,21 +277,37 @@ function createDraft(input: CreateOpportunityDraftInput): OpportunityDraft {
   };
 }
 
-function opportunityValidation(): OpportunityValidation {
+function opportunityValidation(draft: OpportunityDraft): OpportunityValidation {
+  const estimatedCost = Math.round(
+    ELIGIBLE_EMPLOYEE_COUNT *
+      (EXPECTED_PARTICIPATION_PERCENT / 100) *
+      draft.rewardAmount,
+  );
+  const maximumExposure = ELIGIBLE_EMPLOYEE_COUNT * draft.maxPerEmployee;
+  const budgetWithinLimit = draft.totalBudget >= maximumExposure;
+  const issues = [
+    ...(budgetWithinLimit
+      ? []
+      : [
+          `Maximum exposure of R${maximumExposure.toLocaleString("en-US")} exceeds the total budget.`,
+        ]),
+    "3 fairness exceptions require review before launch.",
+  ];
+
   return {
     draftId: "draft-opportunity",
-    readiness: "review_required",
+    readiness: budgetWithinLimit ? "review_required" : "blocked",
     rulesClear: true,
     dataAvailable: true,
     dataFresh: true,
     fairnessPassed: false,
-    budgetWithinLimit: true,
+    budgetWithinLimit,
     eligibleEmployeeCount: ELIGIBLE_EMPLOYEE_COUNT,
     expectedParticipationPercent: EXPECTED_PARTICIPATION_PERCENT,
-    estimatedCost: ESTIMATED_COST,
-    maximumExposure: MAXIMUM_EXPOSURE,
+    estimatedCost,
+    maximumExposure,
     unresolvedExceptionCount: 3,
-    issues: ["3 fairness exceptions require review before launch."],
+    issues,
   };
 }
 
@@ -345,7 +359,9 @@ export function createEmployerCapabilities(
 
       const draft = createDraft(input);
       if (!input.confirm) {
-        return previewResult("Opportunity draft ready to confirm.", draft);
+        return previewResult("Opportunity draft ready to confirm.", draft, [
+          "This saves a draft only; it does not launch or approve a programme.",
+        ]);
       }
 
       store.dispatch({ type: "employer/save-draft", draft, source });
@@ -376,15 +392,15 @@ export function createEmployerCapabilities(
           "Save the draft, then validate its current ID.",
         );
       }
-      if (draft.totalBudget < MAXIMUM_EXPOSURE) {
+      const validation = opportunityValidation(draft);
+      if (!validation.budgetWithinLimit) {
         return errorResult(
           "BUDGET_EXCEEDED",
           "The total budget is below the maximum possible exposure.",
-          "Increase the budget to at least R103,000 or reduce eligible reach or the maximum per employee.",
+          `Increase the budget to at least R${validation.maximumExposure.toLocaleString("en-US")} or reduce eligible reach or the maximum per employee.`,
         );
       }
 
-      const validation = opportunityValidation();
       store.dispatch({ type: "employer/set-validation", validation, source });
       return appliedResult(
         "Opportunity draft validated for review.",

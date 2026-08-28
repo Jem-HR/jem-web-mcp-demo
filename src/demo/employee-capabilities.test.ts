@@ -23,26 +23,62 @@ describe("employee capabilities", () => {
       isPrivate: true,
     };
 
-    expect(
-      capabilities.updateSavingsGoal({ ...input, confirm: false }),
-    ).toMatchObject({
+    const preview = capabilities.updateSavingsGoal({
+      ...input,
+      confirm: false,
+    });
+    expect(preview).toMatchObject({
       ok: true,
       status: "preview",
+      warnings: [
+        "This changes private employee demo data only; it does not move money.",
+      ],
     });
     expect(store.getState().employee.goal.name).toBe("School Fees");
 
-    expect(
-      capabilities.updateSavingsGoal({ ...input, confirm: true }),
-    ).toMatchObject({
+    const applied = capabilities.updateSavingsGoal({
+      ...input,
+      confirm: true,
+    });
+    expect(applied).toMatchObject({
       ok: true,
       status: "applied",
     });
+    expect(applied).not.toHaveProperty("warnings");
     expect(store.getState().employee.goal.name).toBe("December Fund");
     expect(store.getState().activity?.source).toBe("webmcp");
   });
 
-  it("makes shift requests idempotent and rejects unavailable rewards", () => {
+  it("returns a self-contained shift preview and keeps requests idempotent", () => {
     const capabilities = createEmployeeCapabilities(createDemoStore());
+
+    expect(
+      capabilities.requestShift({
+        shiftId: "shift-sat-rosebank",
+        confirm: false,
+      }),
+    ).toEqual({
+      ok: true,
+      status: "preview",
+      summary: "Shift request ready to confirm.",
+      warnings: [
+        "This records a request only; it does not assign the shift or guarantee earnings.",
+      ],
+      data: {
+        shiftId: "shift-sat-rosebank",
+        status: "requested",
+        date: "2026-09-05",
+        startTime: "08:00",
+        endTime: "17:00",
+        hours: 9,
+        site: "Rosebank Mall",
+        eligibility: "Active Pick n Pay retail employee at the listed site",
+        deadline: "2026-09-04",
+        estimatedEarnings: 480,
+        estimateKind: "estimated_before_deductions",
+        alreadyRequested: false,
+      },
+    });
 
     expect(
       capabilities.requestShift({
@@ -63,6 +99,31 @@ describe("employee capabilities", () => {
       status: "applied",
       data: { alreadyRequested: true },
     });
+  });
+
+  it("warns before reward allocation and rejects unavailable rewards", () => {
+    const capabilities = createEmployeeCapabilities(createDemoStore());
+
+    const preview = capabilities.allocateReward({
+      rewardId: "reward-safety",
+      destination: "savings",
+      confirm: false,
+    });
+    expect(preview).toMatchObject({
+      ok: true,
+      status: "preview",
+      warnings: [
+        "This changes only the local demo allocation; it does not issue a reward or move money.",
+      ],
+    });
+    const applied = capabilities.allocateReward({
+      rewardId: "reward-safety",
+      destination: "savings",
+      confirm: true,
+    });
+    expect(applied).toMatchObject({ ok: true, status: "applied" });
+    expect(applied).not.toHaveProperty("warnings");
+
     expect(
       capabilities.allocateReward({
         rewardId: "reward-reliability",

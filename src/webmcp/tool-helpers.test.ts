@@ -7,6 +7,7 @@ import {
   assertFiniteNumber,
   assertString,
   safeToolExecute,
+  ToolInputValidationError,
 } from "./tool-helpers";
 
 const INVALID_INPUT_MESSAGE = "test_tool received invalid input.";
@@ -23,6 +24,7 @@ function expectFixedValidationError(
     error = caughtError;
   }
 
+  expect(error).toBeInstanceOf(ToolInputValidationError);
   expect(error).toBeInstanceOf(TypeError);
   expect(error instanceof Error ? error.message : "").toBe(
     INVALID_INPUT_MESSAGE,
@@ -119,10 +121,8 @@ describe("assertClosedObject", () => {
   it("does not echo rejected values in its fixed error", () => {
     const secret = "sk-live-secret-value";
 
-    expect(() => assertClosedObject({ secret }, [], "test_tool")).toThrow(
-      new TypeError("test_tool received invalid input."),
-    );
-    expect(() => assertClosedObject({ secret }, [], "test_tool")).not.toThrow(
+    expectFixedValidationError(
+      () => assertClosedObject({ secret }, [], "test_tool"),
       secret,
     );
   });
@@ -239,5 +239,24 @@ describe("safeToolExecute", () => {
     });
     expect(JSON.stringify(result)).not.toContain("private internal detail");
     expect(JSON.stringify(result)).not.toContain("sk-live-secret-value");
+  });
+
+  it("maps typed validation failures to a redacted invalid-input result", () => {
+    const result = safeToolExecute(() => {
+      assertString({ token: "sk-protected-input" }, "test_tool");
+      throw new Error("unreachable");
+    });
+
+    expect(result).toEqual({
+      ok: false,
+      status: "error",
+      error: {
+        code: "INVALID_INPUT",
+        message: "The tool input is invalid.",
+        recovery: "Use the tool schema and provide only documented fields.",
+      },
+    });
+    expect(JSON.stringify(result)).not.toContain("sk-protected-input");
+    expect(JSON.stringify(result)).not.toContain("test_tool");
   });
 });

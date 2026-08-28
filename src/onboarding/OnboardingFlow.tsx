@@ -53,7 +53,6 @@ interface OnboardingStepArgs {
 
 interface CompleteOnboardingArgs {
   capabilities: DemoCapabilities;
-  store: DemoStore;
   goalDraft: Omit<UpdateSavingsGoalInput, "confirm">;
   expenseDraft: ExpenseMap;
   setRecoveryMessage(message: string): void;
@@ -342,27 +341,15 @@ function completeOnboarding({
   expenseDraft,
   goalDraft,
   setRecoveryMessage,
-  store,
 }: CompleteOnboardingArgs): void {
-  const goalResult = capabilities.employee.updateSavingsGoal(
-    { ...goalDraft, confirm: true },
+  const result = capabilities.employee.completeOnboardingPlan(
+    { goal: goalDraft, expenses: expenseDraft },
     "ui",
   );
-  if (!goalResult.ok) {
-    setRecoveryMessage(goalResult.error.recovery);
+  if (!result.ok) {
+    setRecoveryMessage(result.error.recovery);
     return;
   }
-
-  const expenseResult = capabilities.employee.updateExpenses(
-    expenseDraft,
-    "ui",
-  );
-  if (!expenseResult.ok) {
-    setRecoveryMessage(expenseResult.error.recovery);
-    return;
-  }
-
-  store.dispatch({ type: "onboarding/complete" });
 }
 
 export function OnboardingFlow() {
@@ -398,7 +385,6 @@ export function OnboardingFlow() {
           onClick={() =>
             completeOnboarding({
               capabilities,
-              store,
               goalDraft,
               expenseDraft,
               setRecoveryMessage,

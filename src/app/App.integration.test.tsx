@@ -132,6 +132,41 @@ describe("App integration", () => {
     expect("demoCapabilities" in window).toBe(false);
   });
 
+  it("synchronises one employee tool request with employer applications", async () => {
+    let capabilities: DemoCapabilities | null = null;
+    render(
+      <DemoProvider
+        exposeCapabilities={(value) => {
+          capabilities = value;
+        }}
+      >
+        <AppShell />
+      </DemoProvider>,
+    );
+    const requestShift = toolByName(capabilities!, "request_shift");
+
+    await act(async () => {
+      await executeTool(requestShift, {
+        shiftId: "shift-sat-rosebank",
+        confirm: true,
+      });
+      await executeTool(requestShift, {
+        shiftId: "shift-sat-rosebank",
+        confirm: true,
+      });
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "Employer Hub" }));
+    fireEvent.click(screen.getByRole("tab", { name: "Manage Shifts" }));
+    const shiftCard = screen
+      .getByRole("heading", { name: "Sales Floor · Rosebank Mall" })
+      .closest<HTMLElement>(".card");
+    expect(shiftCard).not.toBeNull();
+    expect(
+      within(shiftCard!).getByText("4 applications · 2 places"),
+    ).toBeInTheDocument();
+  });
+
   it("renders persisted WebMCP opportunity draft and validation state in Employer Hub", async () => {
     let capabilities: DemoCapabilities | null = null;
     render(
