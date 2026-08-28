@@ -10,12 +10,23 @@ export interface DialogProps {
 
 const focusableSelector = [
   "a[href]",
-  "button:not([disabled])",
-  "input:not([disabled])",
-  "select:not([disabled])",
-  "textarea:not([disabled])",
-  '[tabindex]:not([tabindex="-1"])',
+  "button",
+  "input",
+  "select",
+  "textarea",
+  "[tabindex]",
 ].join(", ");
+
+function getTabbableElements(container: HTMLElement | null): HTMLElement[] {
+  return Array.from(
+    container?.querySelectorAll<HTMLElement>(focusableSelector) ?? [],
+  ).filter(
+    (element) =>
+      !element.matches(":disabled") &&
+      element.tabIndex >= 0 &&
+      element.closest('[aria-hidden="true"]') === null,
+  );
+}
 
 export function Dialog({
   children,
@@ -27,7 +38,6 @@ export function Dialog({
   const dialogRef = useRef<HTMLDivElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const previouslyFocusedRef = useRef<HTMLElement | null>(null);
-  const lastInteractedRef = useRef<HTMLElement | null>(null);
   const onCloseRef = useRef(onClose);
   const headingId = useId();
 
@@ -36,24 +46,11 @@ export function Dialog({
   }, [onClose]);
 
   useEffect(() => {
-    function recordInteraction(event: MouseEvent) {
-      if (event.target instanceof HTMLElement) {
-        lastInteractedRef.current = event.target;
-      }
-    }
-
-    document.addEventListener("click", recordInteraction);
-    return () => document.removeEventListener("click", recordInteraction);
-  }, []);
-
-  useEffect(() => {
     if (!open) return;
 
     const activeElement = document.activeElement;
     previouslyFocusedRef.current =
-      activeElement instanceof HTMLElement && activeElement !== document.body
-        ? activeElement
-        : lastInteractedRef.current;
+      activeElement instanceof HTMLElement ? activeElement : null;
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     closeButtonRef.current?.focus();
@@ -67,10 +64,7 @@ export function Dialog({
 
       if (event.key !== "Tab") return;
 
-      const focusable = Array.from(
-        dialogRef.current?.querySelectorAll<HTMLElement>(focusableSelector) ??
-          [],
-      );
+      const focusable = getTabbableElements(dialogRef.current);
       if (focusable.length === 0) {
         event.preventDefault();
         return;
