@@ -54,6 +54,7 @@
 ### Task 1: Bootstrap the Tested React/Vite Shell
 
 **Files:**
+
 - Create: `.gitignore`
 - Create: `.prettierignore`
 - Create: `package.json`
@@ -69,6 +70,7 @@
 - Create: `src/styles.css`
 
 **Interfaces:**
+
 - Consumes: the approved design spec only.
 - Produces: `App(): JSX.Element`, the test/build toolchain, and the global stylesheet imported by `src/main.tsx`.
 
@@ -146,17 +148,17 @@ package-lock.json
 Create `eslint.config.js`:
 
 ```js
-import js from '@eslint/js'
-import { defineConfig, globalIgnores } from 'eslint/config'
-import reactHooks from 'eslint-plugin-react-hooks'
-import reactRefresh from 'eslint-plugin-react-refresh'
-import globals from 'globals'
-import tseslint from 'typescript-eslint'
+import js from "@eslint/js";
+import { defineConfig, globalIgnores } from "eslint/config";
+import reactHooks from "eslint-plugin-react-hooks";
+import reactRefresh from "eslint-plugin-react-refresh";
+import globals from "globals";
+import tseslint from "typescript-eslint";
 
 export default defineConfig([
-  globalIgnores(['dist', 'coverage']),
+  globalIgnores(["dist", "coverage"]),
   {
-    files: ['**/*.{ts,tsx}'],
+    files: ["**/*.{ts,tsx}"],
     extends: [
       js.configs.recommended,
       ...tseslint.configs.recommended,
@@ -168,7 +170,7 @@ export default defineConfig([
       globals: globals.browser,
     },
   },
-])
+]);
 ```
 
 Create `tsconfig.json`:
@@ -202,17 +204,17 @@ Create `tsconfig.json`:
 Create `vite.config.ts`:
 
 ```ts
-import react from '@vitejs/plugin-react'
-import { defineConfig } from 'vitest/config'
+import react from "@vitejs/plugin-react";
+import { defineConfig } from "vitest/config";
 
 export default defineConfig({
   plugins: [react()],
   test: {
-    environment: 'jsdom',
-    setupFiles: './src/test/setup.ts',
+    environment: "jsdom",
+    setupFiles: "./src/test/setup.ts",
     css: true,
   },
-})
+});
 ```
 
 Create `index.html`:
@@ -239,13 +241,13 @@ Create `index.html`:
 Create `src/test/setup.ts`:
 
 ```ts
-import '@testing-library/jest-dom/vitest'
-import { cleanup } from '@testing-library/react'
-import { afterEach } from 'vitest'
+import "@testing-library/jest-dom/vitest";
+import { cleanup } from "@testing-library/react";
+import { afterEach } from "vitest";
 
 afterEach(() => {
-  cleanup()
-})
+  cleanup();
+});
 ```
 
 - [ ] **Step 2: Install the exact dependencies and generate the lockfile**
@@ -263,23 +265,23 @@ Expected: exit 0, `package-lock.json` is created, and npm reports no engine mism
 Create `src/app/App.test.tsx`:
 
 ```tsx
-import { render, screen } from '@testing-library/react'
-import { describe, expect, it } from 'vitest'
+import { render, screen } from "@testing-library/react";
+import { describe, expect, it } from "vitest";
 
-import { App } from './App'
+import { App } from "./App";
 
-describe('App', () => {
-  it('renders the neutral WebMCP foundation shell', () => {
-    render(<App />)
+describe("App", () => {
+  it("renders the neutral WebMCP foundation shell", () => {
+    render(<App />);
 
     expect(
-      screen.getByRole('heading', { name: 'Jem WebMCP Demo' }),
-    ).toBeInTheDocument()
+      screen.getByRole("heading", { name: "Jem WebMCP Demo" }),
+    ).toBeInTheDocument();
     expect(
-      screen.getByText('Ready for the Figma handoff.'),
-    ).toBeInTheDocument()
-  })
-})
+      screen.getByText("Ready for the Figma handoff."),
+    ).toBeInTheDocument();
+  });
+});
 ```
 
 - [ ] **Step 4: Run the test and verify the red state**
@@ -306,30 +308,30 @@ export function App() {
         <p className="lede">Ready for the Figma handoff.</p>
       </section>
     </main>
-  )
+  );
 }
 ```
 
 Create `src/main.tsx`:
 
 ```tsx
-import { StrictMode } from 'react'
-import { createRoot } from 'react-dom/client'
+import { StrictMode } from "react";
+import { createRoot } from "react-dom/client";
 
-import { App } from './app/App'
-import './styles.css'
+import { App } from "./app/App";
+import "./styles.css";
 
-const rootElement = document.getElementById('root')
+const rootElement = document.getElementById("root");
 
 if (!rootElement) {
-  throw new Error('Root element not found.')
+  throw new Error("Root element not found.");
 }
 
 createRoot(rootElement).render(
   <StrictMode>
     <App />
   </StrictMode>,
-)
+);
 ```
 
 Create `src/styles.css`:
@@ -338,7 +340,12 @@ Create `src/styles.css`:
 :root {
   color-scheme: light dark;
   font-family:
-    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    Inter,
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
     sans-serif;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -460,12 +467,14 @@ git commit -m "chore: bootstrap React WebMCP app"
 ### Task 2: Define the Shared Application Capability and Starter Tool
 
 **Files:**
+
 - Create: `src/app/app-status.test.ts`
 - Create: `src/app/app-status.ts`
 - Create: `src/webmcp/tools.test.ts`
 - Create: `src/webmcp/tools.ts`
 
 **Interfaces:**
+
 - Consumes: ambient `WebMCP.ModelContextTool` declarations from `webmcp-types`.
 - Produces: `AppStatus`, `getAppStatus(): AppStatus`, `getAppStatusTool: WebMCP.ModelContextTool`, and `webMcpTools: readonly WebMCP.ModelContextTool[]`.
 
@@ -474,19 +483,19 @@ git commit -m "chore: bootstrap React WebMCP app"
 Create `src/app/app-status.test.ts`:
 
 ```ts
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from "vitest";
 
-import { getAppStatus } from './app-status'
+import { getAppStatus } from "./app-status";
 
-describe('getAppStatus', () => {
-  it('returns the stable foundation status shared by humans and agents', () => {
+describe("getAppStatus", () => {
+  it("returns the stable foundation status shared by humans and agents", () => {
     expect(getAppStatus()).toEqual({
-      name: 'Jem WebMCP Demo',
-      phase: 'foundation',
+      name: "Jem WebMCP Demo",
+      phase: "foundation",
       webMcpReady: true,
-    })
-  })
-})
+    });
+  });
+});
 ```
 
 - [ ] **Step 2: Run the capability test and verify the red state**
@@ -505,17 +514,17 @@ Create `src/app/app-status.ts`:
 
 ```ts
 export interface AppStatus {
-  name: 'Jem WebMCP Demo'
-  phase: 'foundation'
-  webMcpReady: true
+  name: "Jem WebMCP Demo";
+  phase: "foundation";
+  webMcpReady: true;
 }
 
 export function getAppStatus(): AppStatus {
   return {
-    name: 'Jem WebMCP Demo',
-    phase: 'foundation',
+    name: "Jem WebMCP Demo",
+    phase: "foundation",
     webMcpReady: true,
-  }
+  };
 }
 ```
 
@@ -534,38 +543,38 @@ Expected: PASS with 1 test.
 Create `src/webmcp/tools.test.ts`:
 
 ```ts
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from "vitest";
 
-import { getAppStatusTool, webMcpTools } from './tools'
+import { getAppStatusTool, webMcpTools } from "./tools";
 
-describe('getAppStatusTool', () => {
-  it('declares a narrow read-only tool schema', () => {
+describe("getAppStatusTool", () => {
+  it("declares a narrow read-only tool schema", () => {
     expect(getAppStatusTool).toMatchObject({
-      name: 'get_app_status',
+      name: "get_app_status",
       annotations: { readOnlyHint: true },
       inputSchema: {
-        type: 'object',
+        type: "object",
         properties: {},
         additionalProperties: false,
       },
-    })
-    expect(webMcpTools).toEqual([getAppStatusTool])
-  })
+    });
+    expect(webMcpTools).toEqual([getAppStatusTool]);
+  });
 
-  it('returns structured, verifiable application status', async () => {
+  it("returns structured, verifiable application status", async () => {
     await expect(getAppStatusTool.execute({})).resolves.toEqual({
-      name: 'Jem WebMCP Demo',
-      phase: 'foundation',
+      name: "Jem WebMCP Demo",
+      phase: "foundation",
       webMcpReady: true,
-    })
-  })
+    });
+  });
 
-  it('rejects unexpected input even when the caller bypasses the schema', async () => {
+  it("rejects unexpected input even when the caller bypasses the schema", async () => {
     await expect(
       getAppStatusTool.execute({ unexpected: true }),
-    ).rejects.toThrow('get_app_status does not accept input properties.')
-  })
-})
+    ).rejects.toThrow("get_app_status does not accept input properties.");
+  });
+});
 ```
 
 - [ ] **Step 6: Run the tool tests and verify the red state**
@@ -583,15 +592,15 @@ Expected: FAIL because `src/webmcp/tools.ts` does not exist.
 Create `src/webmcp/tools.ts`:
 
 ```ts
-import { getAppStatus } from '../app/app-status'
+import { getAppStatus } from "../app/app-status";
 
 export const getAppStatusTool = {
-  name: 'get_app_status',
-  title: 'Get application status',
+  name: "get_app_status",
+  title: "Get application status",
   description:
-    'Read the current foundation status of the Jem WebMCP Demo without changing application state.',
+    "Read the current foundation status of the Jem WebMCP Demo without changing application state.",
   inputSchema: {
-    type: 'object',
+    type: "object",
     properties: {},
     additionalProperties: false,
   },
@@ -600,16 +609,16 @@ export const getAppStatusTool = {
   },
   async execute(input) {
     if (Object.keys(input).length > 0) {
-      throw new TypeError('get_app_status does not accept input properties.')
+      throw new TypeError("get_app_status does not accept input properties.");
     }
 
-    return getAppStatus()
+    return getAppStatus();
   },
-} satisfies WebMCP.ModelContextTool
+} satisfies WebMCP.ModelContextTool;
 
 export const webMcpTools: readonly WebMCP.ModelContextTool[] = [
   getAppStatusTool,
-]
+];
 ```
 
 - [ ] **Step 8: Verify all capability and tool tests pass**
@@ -634,11 +643,13 @@ git commit -m "feat: define WebMCP status tool"
 ### Task 3: Register Tools with Feature Detection and Abort Cleanup
 
 **Files:**
+
 - Create: `src/webmcp/types.ts`
 - Create: `src/webmcp/register-tools.test.ts`
 - Create: `src/webmcp/register-tools.ts`
 
 **Interfaces:**
+
 - Consumes: `webMcpTools: readonly WebMCP.ModelContextTool[]` from Task 2.
 - Produces: `WebMcpStatus` and `registerWebMcpTools(modelContext, onStatus, tools?): () => void`.
 
@@ -648,10 +659,10 @@ Create `src/webmcp/types.ts`:
 
 ```ts
 export type WebMcpStatus =
-  | { state: 'registering' }
-  | { state: 'ready'; toolCount: number }
-  | { state: 'unsupported' }
-  | { state: 'error'; message: string }
+  | { state: "registering" }
+  | { state: "ready"; toolCount: number }
+  | { state: "unsupported" }
+  | { state: "error"; message: string };
 ```
 
 - [ ] **Step 2: Write the failing registration lifecycle tests**
@@ -659,76 +670,76 @@ export type WebMcpStatus =
 Create `src/webmcp/register-tools.test.ts`:
 
 ```ts
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, it, vi } from "vitest";
 
-import { registerWebMcpTools } from './register-tools'
-import { webMcpTools } from './tools'
+import { registerWebMcpTools } from "./register-tools";
+import { webMcpTools } from "./tools";
 
 function createModelContext(
-  registerTool: WebMCP.ModelContext['registerTool'],
+  registerTool: WebMCP.ModelContext["registerTool"],
 ): WebMCP.ModelContext {
-  return { registerTool } as WebMCP.ModelContext
+  return { registerTool } as WebMCP.ModelContext;
 }
 
-describe('registerWebMcpTools', () => {
-  it('reports unsupported without attempting registration', () => {
-    const onStatus = vi.fn()
+describe("registerWebMcpTools", () => {
+  it("reports unsupported without attempting registration", () => {
+    const onStatus = vi.fn();
 
-    const dispose = registerWebMcpTools(undefined, onStatus)
+    const dispose = registerWebMcpTools(undefined, onStatus);
 
-    expect(onStatus).toHaveBeenCalledOnce()
-    expect(onStatus).toHaveBeenCalledWith({ state: 'unsupported' })
-    expect(() => dispose()).not.toThrow()
-  })
+    expect(onStatus).toHaveBeenCalledOnce();
+    expect(onStatus).toHaveBeenCalledWith({ state: "unsupported" });
+    expect(() => dispose()).not.toThrow();
+  });
 
-  it('registers every tool and reports readiness', async () => {
-    const registerTool = vi.fn<WebMCP.ModelContext['registerTool']>()
-    registerTool.mockResolvedValue(undefined)
-    const onStatus = vi.fn()
+  it("registers every tool and reports readiness", async () => {
+    const registerTool = vi.fn<WebMCP.ModelContext["registerTool"]>();
+    registerTool.mockResolvedValue(undefined);
+    const onStatus = vi.fn();
 
-    registerWebMcpTools(createModelContext(registerTool), onStatus)
+    registerWebMcpTools(createModelContext(registerTool), onStatus);
 
-    expect(onStatus).toHaveBeenNthCalledWith(1, { state: 'registering' })
+    expect(onStatus).toHaveBeenNthCalledWith(1, { state: "registering" });
     await vi.waitFor(() => {
       expect(onStatus).toHaveBeenLastCalledWith({
-        state: 'ready',
+        state: "ready",
         toolCount: webMcpTools.length,
-      })
-    })
-    expect(registerTool).toHaveBeenCalledTimes(webMcpTools.length)
-  })
+      });
+    });
+    expect(registerTool).toHaveBeenCalledTimes(webMcpTools.length);
+  });
 
-  it('aborts the shared registration signal during cleanup', () => {
-    const registerTool = vi.fn<WebMCP.ModelContext['registerTool']>()
-    registerTool.mockResolvedValue(undefined)
-    const onStatus = vi.fn()
+  it("aborts the shared registration signal during cleanup", () => {
+    const registerTool = vi.fn<WebMCP.ModelContext["registerTool"]>();
+    registerTool.mockResolvedValue(undefined);
+    const onStatus = vi.fn();
 
     const dispose = registerWebMcpTools(
       createModelContext(registerTool),
       onStatus,
-    )
-    const options = registerTool.mock.calls[0]?.[1]
+    );
+    const options = registerTool.mock.calls[0]?.[1];
 
-    expect(options?.signal?.aborted).toBe(false)
-    dispose()
-    expect(options?.signal?.aborted).toBe(true)
-  })
+    expect(options?.signal?.aborted).toBe(false);
+    dispose();
+    expect(options?.signal?.aborted).toBe(true);
+  });
 
-  it('contains registration failures behind a non-sensitive status', async () => {
-    const registerTool = vi.fn<WebMCP.ModelContext['registerTool']>()
-    registerTool.mockRejectedValue(new Error('browser-internal details'))
-    const onStatus = vi.fn()
+  it("contains registration failures behind a non-sensitive status", async () => {
+    const registerTool = vi.fn<WebMCP.ModelContext["registerTool"]>();
+    registerTool.mockRejectedValue(new Error("browser-internal details"));
+    const onStatus = vi.fn();
 
-    registerWebMcpTools(createModelContext(registerTool), onStatus)
+    registerWebMcpTools(createModelContext(registerTool), onStatus);
 
     await vi.waitFor(() => {
       expect(onStatus).toHaveBeenLastCalledWith({
-        state: 'error',
-        message: 'WebMCP tool registration failed.',
-      })
-    })
-  })
-})
+        state: "error",
+        message: "WebMCP tool registration failed.",
+      });
+    });
+  });
+});
 ```
 
 - [ ] **Step 3: Run the adapter tests and verify the red state**
@@ -746,12 +757,12 @@ Expected: FAIL because `src/webmcp/register-tools.ts` does not exist.
 Create `src/webmcp/register-tools.ts`:
 
 ```ts
-import { webMcpTools } from './tools'
-import type { WebMcpStatus } from './types'
+import { webMcpTools } from "./tools";
+import type { WebMcpStatus } from "./types";
 
-type StatusListener = (status: WebMcpStatus) => void
+type StatusListener = (status: WebMcpStatus) => void;
 
-const REGISTRATION_ERROR = 'WebMCP tool registration failed.'
+const REGISTRATION_ERROR = "WebMCP tool registration failed.";
 
 export function registerWebMcpTools(
   modelContext: WebMCP.ModelContext | undefined,
@@ -759,37 +770,37 @@ export function registerWebMcpTools(
   tools: readonly WebMCP.ModelContextTool[] = webMcpTools,
 ): () => void {
   if (!modelContext) {
-    onStatus({ state: 'unsupported' })
-    return () => undefined
+    onStatus({ state: "unsupported" });
+    return () => undefined;
   }
 
-  const controller = new AbortController()
-  onStatus({ state: 'registering' })
+  const controller = new AbortController();
+  onStatus({ state: "registering" });
 
-  let registrations: Promise<void>[]
+  let registrations: Promise<void>[];
 
   try {
     registrations = tools.map((tool) =>
       modelContext.registerTool(tool, { signal: controller.signal }),
-    )
+    );
   } catch {
-    onStatus({ state: 'error', message: REGISTRATION_ERROR })
-    return () => controller.abort()
+    onStatus({ state: "error", message: REGISTRATION_ERROR });
+    return () => controller.abort();
   }
 
   void Promise.all(registrations)
     .then(() => {
       if (!controller.signal.aborted) {
-        onStatus({ state: 'ready', toolCount: tools.length })
+        onStatus({ state: "ready", toolCount: tools.length });
       }
     })
     .catch(() => {
       if (!controller.signal.aborted) {
-        onStatus({ state: 'error', message: REGISTRATION_ERROR })
+        onStatus({ state: "error", message: REGISTRATION_ERROR });
       }
-    })
+    });
 
-  return () => controller.abort()
+  return () => controller.abort();
 }
 ```
 
@@ -815,12 +826,14 @@ git commit -m "feat: register WebMCP tools safely"
 ### Task 4: Bind WebMCP Status to the Accessible Placeholder UI
 
 **Files:**
+
 - Create: `src/webmcp/use-webmcp-status.ts`
 - Modify: `src/app/App.test.tsx`
 - Modify: `src/app/App.tsx`
 - Modify: `src/styles.css`
 
 **Interfaces:**
+
 - Consumes: `registerWebMcpTools(document.modelContext, onStatus)` and `WebMcpStatus` from Task 3.
 - Produces: `useWebMcpStatus(): WebMcpStatus` and a live status region in `App`.
 
@@ -829,65 +842,65 @@ git commit -m "feat: register WebMCP tools safely"
 Replace `src/app/App.test.tsx` with:
 
 ```tsx
-import { render, screen } from '@testing-library/react'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { render, screen } from "@testing-library/react";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { App } from './App'
+import { App } from "./App";
 
 function setModelContext(modelContext: WebMCP.ModelContext | undefined) {
-  Object.defineProperty(document, 'modelContext', {
+  Object.defineProperty(document, "modelContext", {
     configurable: true,
     value: modelContext,
-  })
+  });
 }
 
 afterEach(() => {
-  setModelContext(undefined)
-})
+  setModelContext(undefined);
+});
 
-describe('App', () => {
-  it('renders the neutral WebMCP foundation shell', () => {
-    setModelContext(undefined)
-    render(<App />)
-
-    expect(
-      screen.getByRole('heading', { name: 'Jem WebMCP Demo' }),
-    ).toBeInTheDocument()
-    expect(
-      screen.getByText('Ready for the Figma handoff.'),
-    ).toBeInTheDocument()
-    expect(screen.getByRole('status')).toHaveTextContent(
-      'WebMCP is unavailable in this browser.',
-    )
-  })
-
-  it('announces readiness after the browser registers the tool', async () => {
-    const registerTool = vi.fn<WebMCP.ModelContext['registerTool']>()
-    registerTool.mockResolvedValue(undefined)
-    setModelContext({ registerTool } as WebMCP.ModelContext)
-
-    render(<App />)
+describe("App", () => {
+  it("renders the neutral WebMCP foundation shell", () => {
+    setModelContext(undefined);
+    render(<App />);
 
     expect(
-      await screen.findByText('WebMCP is ready with 1 tool.'),
-    ).toBeInTheDocument()
-  })
+      screen.getByRole("heading", { name: "Jem WebMCP Demo" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("Ready for the Figma handoff."),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("status")).toHaveTextContent(
+      "WebMCP is unavailable in this browser.",
+    );
+  });
 
-  it('shows a non-blocking error when registration fails', async () => {
-    const registerTool = vi.fn<WebMCP.ModelContext['registerTool']>()
-    registerTool.mockRejectedValue(new Error('permission denied'))
-    setModelContext({ registerTool } as WebMCP.ModelContext)
+  it("announces readiness after the browser registers the tool", async () => {
+    const registerTool = vi.fn<WebMCP.ModelContext["registerTool"]>();
+    registerTool.mockResolvedValue(undefined);
+    setModelContext({ registerTool } as WebMCP.ModelContext);
 
-    render(<App />)
+    render(<App />);
 
     expect(
-      await screen.findByText('WebMCP tool registration failed.'),
-    ).toBeInTheDocument()
+      await screen.findByText("WebMCP is ready with 1 tool."),
+    ).toBeInTheDocument();
+  });
+
+  it("shows a non-blocking error when registration fails", async () => {
+    const registerTool = vi.fn<WebMCP.ModelContext["registerTool"]>();
+    registerTool.mockRejectedValue(new Error("permission denied"));
+    setModelContext({ registerTool } as WebMCP.ModelContext);
+
+    render(<App />);
+
     expect(
-      screen.getByRole('heading', { name: 'Jem WebMCP Demo' }),
-    ).toBeInTheDocument()
-  })
-})
+      await screen.findByText("WebMCP tool registration failed."),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "Jem WebMCP Demo" }),
+    ).toBeInTheDocument();
+  });
+});
 ```
 
 - [ ] **Step 2: Run the component tests and verify the red state**
@@ -905,19 +918,19 @@ Expected: FAIL because the current `App` has no WebMCP status region.
 Create `src/webmcp/use-webmcp-status.ts`:
 
 ```ts
-import { useEffect, useState } from 'react'
+import { useEffect, useState } from "react";
 
-import { registerWebMcpTools } from './register-tools'
-import type { WebMcpStatus } from './types'
+import { registerWebMcpTools } from "./register-tools";
+import type { WebMcpStatus } from "./types";
 
 export function useWebMcpStatus(): WebMcpStatus {
-  const [status, setStatus] = useState<WebMcpStatus>({ state: 'registering' })
+  const [status, setStatus] = useState<WebMcpStatus>({ state: "registering" });
 
   useEffect(() => {
-    return registerWebMcpTools(document.modelContext, setStatus)
-  }, [])
+    return registerWebMcpTools(document.modelContext, setStatus);
+  }, []);
 
-  return status
+  return status;
 }
 ```
 
@@ -926,24 +939,24 @@ export function useWebMcpStatus(): WebMcpStatus {
 Replace `src/app/App.tsx` with:
 
 ```tsx
-import { useWebMcpStatus } from '../webmcp/use-webmcp-status'
-import type { WebMcpStatus } from '../webmcp/types'
+import { useWebMcpStatus } from "../webmcp/use-webmcp-status";
+import type { WebMcpStatus } from "../webmcp/types";
 
 function getStatusCopy(status: WebMcpStatus): string {
   switch (status.state) {
-    case 'registering':
-      return 'Registering WebMCP tools…'
-    case 'ready':
-      return `WebMCP is ready with ${status.toolCount} tool${status.toolCount === 1 ? '' : 's'}.`
-    case 'unsupported':
-      return 'WebMCP is unavailable in this browser.'
-    case 'error':
-      return status.message
+    case "registering":
+      return "Registering WebMCP tools…";
+    case "ready":
+      return `WebMCP is ready with ${status.toolCount} tool${status.toolCount === 1 ? "" : "s"}.`;
+    case "unsupported":
+      return "WebMCP is unavailable in this browser.";
+    case "error":
+      return status.message;
   }
 }
 
 export function App() {
-  const webMcpStatus = useWebMcpStatus()
+  const webMcpStatus = useWebMcpStatus();
 
   return (
     <main className="app-shell">
@@ -967,7 +980,7 @@ export function App() {
         </p>
       </section>
     </main>
-  )
+  );
 }
 ```
 
@@ -1042,11 +1055,13 @@ git commit -m "feat: surface WebMCP readiness in app"
 ### Task 5: Document, License, and Verify the Challenge Foundation
 
 **Files:**
+
 - Modify: `README.md`
 - Create: `LICENSE`
 - Modify mechanically if required: files reported by Prettier
 
 **Interfaces:**
+
 - Consumes: all commands and boundaries implemented in Tasks 1–4.
 - Produces: clean-checkout instructions, extension guidance, manual browser verification, and a visible MIT license.
 
