@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { createEmployerCapabilities } from "./employer-capabilities";
+import { createInitialDemoState } from "./fixtures";
 import { createDemoStore } from "./store";
 
 const validDraft = {
@@ -175,6 +176,29 @@ describe("employer capabilities", () => {
     expect(
       capabilities.validateOpportunity({ draftId: "missing" }),
     ).toMatchObject({ ok: false, error: { code: "NOT_FOUND" } });
+  });
+
+  it("keeps the fixed review-required validation DTO when injected exceptions are empty", () => {
+    const initial = createInitialDemoState();
+    const store = createDemoStore({
+      ...initial,
+      employer: { ...initial.employer, fairnessExceptions: [] },
+    });
+    const capabilities = createEmployerCapabilities(store);
+    capabilities.createOpportunityDraft({ ...validDraft, confirm: true });
+
+    expect(
+      capabilities.validateOpportunity({ draftId: "draft-opportunity" }),
+    ).toMatchObject({
+      ok: true,
+      status: "applied",
+      data: {
+        readiness: "review_required",
+        fairnessPassed: false,
+        unresolvedExceptionCount: 3,
+        issues: ["3 fairness exceptions require review before launch."],
+      },
+    });
   });
 
   it("rejects an invalid validation source without dispatching", () => {

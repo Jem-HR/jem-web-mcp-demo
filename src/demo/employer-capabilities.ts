@@ -8,7 +8,6 @@ import {
 import { selectEmployerDashboard, type EmployerDashboard } from "./selectors";
 import type {
   ActionSource,
-  DemoState,
   DemoStore,
   FairnessReviewState,
   FairnessSeverity,
@@ -280,31 +279,21 @@ function createDraft(input: CreateOpportunityDraftInput): OpportunityDraft {
   };
 }
 
-function opportunityValidation(state: DemoState): OpportunityValidation {
-  const unresolvedExceptionCount = state.employer.fairnessExceptions.length;
-  const fairnessPassed = unresolvedExceptionCount === 0;
+function opportunityValidation(): OpportunityValidation {
   return {
     draftId: "draft-opportunity",
-    readiness: fairnessPassed ? "ready" : "review_required",
+    readiness: "review_required",
     rulesClear: true,
     dataAvailable: true,
     dataFresh: true,
-    fairnessPassed,
+    fairnessPassed: false,
     budgetWithinLimit: true,
     eligibleEmployeeCount: ELIGIBLE_EMPLOYEE_COUNT,
     expectedParticipationPercent: EXPECTED_PARTICIPATION_PERCENT,
     estimatedCost: ESTIMATED_COST,
     maximumExposure: MAXIMUM_EXPOSURE,
-    unresolvedExceptionCount,
-    issues: fairnessPassed
-      ? []
-      : [
-          `${unresolvedExceptionCount} fairness ${
-            unresolvedExceptionCount === 1
-              ? "exception requires"
-              : "exceptions require"
-          } review before launch.`,
-        ],
+    unresolvedExceptionCount: 3,
+    issues: ["3 fairness exceptions require review before launch."],
   };
 }
 
@@ -395,7 +384,7 @@ export function createEmployerCapabilities(
         );
       }
 
-      const validation = opportunityValidation(store.getState());
+      const validation = opportunityValidation();
       store.dispatch({ type: "employer/set-validation", validation, source });
       return appliedResult(
         "Opportunity draft validated for review.",

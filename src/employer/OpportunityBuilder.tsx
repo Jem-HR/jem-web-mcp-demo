@@ -139,7 +139,11 @@ function DraftPreviewCard({ preview }: { preview: DraftPreview }) {
   );
 }
 
-function ValidationCard({ validation }: { validation: OpportunityValidation }) {
+export function OpportunityValidationCard({
+  validation,
+}: {
+  validation: OpportunityValidation;
+}) {
   return (
     <Card
       aria-label="Programme validation"
@@ -464,7 +468,9 @@ export function OpportunityBuilder() {
         </p>
       ) : null}
       {preview ? <DraftPreviewCard preview={preview} /> : null}
-      {validation ? <ValidationCard validation={validation} /> : null}
+      {validation ? (
+        <OpportunityValidationCard validation={validation} />
+      ) : null}
     </div>
   );
 }

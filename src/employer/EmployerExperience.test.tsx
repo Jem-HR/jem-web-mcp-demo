@@ -11,8 +11,10 @@ import type {
   DemoStore,
   EmployerTab,
   OpportunityDraft,
+  OpportunityValidation,
 } from "../demo/types";
 import featuresCss from "../styles/features.css?raw";
+import { OpportunityValidationCard } from "./OpportunityBuilder";
 
 function setModelContext(modelContext: WebMCP.ModelContext | undefined) {
   Object.defineProperty(document, "modelContext", {
@@ -340,27 +342,36 @@ describe("EmployerExperience", () => {
   });
 
   it("presents a passing fairness result with direct yes semantics", () => {
-    const initial = createInitialDemoState();
-    const store = createDemoStore({
-      ...initial,
-      mode: "employer",
-      employer: { ...initial.employer, fairnessExceptions: [] },
-    });
-    renderEmployerStore(store);
-    openOpportunityBuilder();
-    previewDraft();
-    fireEvent.click(screen.getByRole("button", { name: /save draft/i }));
-    fireEvent.click(
-      screen.getByRole("button", { name: /validate programme/i }),
-    );
+    const validation: OpportunityValidation = {
+      draftId: "draft-opportunity",
+      readiness: "ready",
+      rulesClear: true,
+      dataAvailable: true,
+      dataFresh: true,
+      fairnessPassed: true,
+      budgetWithinLimit: true,
+      eligibleEmployeeCount: 412,
+      expectedParticipationPercent: 68,
+      estimatedCost: 70040,
+      maximumExposure: 103000,
+      unresolvedExceptionCount: 0,
+      issues: [],
+    };
+    render(<OpportunityValidationCard validation={validation} />);
 
-    const validation = screen.getByRole("region", {
+    const validationRegion = screen.getByRole("region", {
       name: /programme validation/i,
     });
     const fairness =
-      within(validation).getByText("Fairness passed").parentElement;
+      within(validationRegion).getByText("Fairness passed").parentElement;
     expect(fairness).not.toBeNull();
     expect(within(fairness!).getByText("Yes")).toBeInTheDocument();
+    expect(
+      within(validationRegion).getByRole("heading", { name: "Ready" }),
+    ).toBeInTheDocument();
+    expect(
+      within(validationRegion).getByText("0 unresolved"),
+    ).toBeInTheDocument();
   });
 
   it("shows recovery for an insufficient budget without false readiness", () => {

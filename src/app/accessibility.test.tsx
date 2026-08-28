@@ -251,10 +251,9 @@ describe("application accessibility", () => {
 
   it("protects focus, touch, responsive, dialog, and reduced-motion CSS contracts", () => {
     const allCss = normalise(`${baseCss}\n${componentsCss}\n${featuresCss}`);
-    expect(allCss).toMatch(/input:focus-visible/);
-    expect(allCss).toMatch(/select:focus-visible/);
-    expect(allCss).toMatch(/textarea:focus-visible/);
-    expect(allCss).toMatch(/outline: 2px solid var\(--jem-white\)/);
+    expect(allCss).toMatch(
+      /button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible, \[tabindex\]:focus-visible \{(?=[^}]*outline: 2px solid var\(--jem-white\))(?=[^}]*box-shadow: var\(--focus-ring\))[^}]*\}/,
+    );
     expect(normalise(tokensCss)).toMatch(
       /--focus-ring: 0 0 0 4px var\(--jem-navy\)/,
     );
@@ -265,6 +264,7 @@ describe("application accessibility", () => {
     expect(allCss).toMatch(
       /\.reward-destinations label \{[^}]*min-(?:block-size|height): 44px/,
     );
+    expect(allCss).toMatch(/\.feature-form__check \{[^}]*min-height: 44px/);
     expect(allCss).toMatch(/body \{[^}]*min-width: 320px/);
     expect(allCss).toMatch(
       /\.tabs__tab:focus-visible \{[^}]*scroll-margin-inline/,
@@ -279,6 +279,9 @@ describe("application accessibility", () => {
     );
     expect(responsiveStart).toBeGreaterThanOrEqual(0);
     expect(responsive).toMatch(/\.app-header \{[^}]*flex-wrap: wrap/);
+    expect(responsive).toMatch(
+      /\.app-header__mode-switcher, \.app-header__meta \{(?=[^}]*min-width: 0)(?=[^}]*max-width: 100%)(?=[^}]*flex-wrap: wrap)[^}]*\}/,
+    );
     expect(responsive).toMatch(
       /\.feature-form__fields--two-columns \{[^}]*grid-template-columns: 1fr/,
     );
