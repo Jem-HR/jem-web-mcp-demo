@@ -20,12 +20,17 @@ const focusableSelector = [
 function getTabbableElements(container: HTMLElement | null): HTMLElement[] {
   return Array.from(
     container?.querySelectorAll<HTMLElement>(focusableSelector) ?? [],
-  ).filter(
-    (element) =>
+  ).filter((element) => {
+    const style = window.getComputedStyle(element);
+    return (
       !element.matches(":disabled") &&
       element.tabIndex >= 0 &&
-      element.closest('[aria-hidden="true"]') === null,
-  );
+      element.closest('[aria-hidden="true"]') === null &&
+      element.closest("[hidden], [inert]") === null &&
+      style.display !== "none" &&
+      style.visibility !== "hidden"
+    );
+  });
 }
 
 export function Dialog({

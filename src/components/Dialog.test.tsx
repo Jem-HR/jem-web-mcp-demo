@@ -105,4 +105,27 @@ describe("Dialog", () => {
     fireEvent.keyDown(document, { key: "Tab", shiftKey: true });
     expect(last).toHaveFocus();
   });
+
+  it("traps Tab around hidden controls at the dialog boundary", () => {
+    render(
+      <Dialog open title="Edit goal" onClose={() => undefined}>
+        <button>First visible action</button>
+        <button>Last visible action</button>
+        <button hidden>Hidden attribute action</button>
+        <button style={{ display: "none" }}>Display none action</button>
+        <button style={{ visibility: "hidden" }}>
+          Visibility hidden action
+        </button>
+      </Dialog>,
+    );
+
+    const close = screen.getByRole("button", { name: "Close dialog" });
+    const last = screen.getByRole("button", { name: "Last visible action" });
+    last.focus();
+    fireEvent.keyDown(document, { key: "Tab" });
+    expect(close).toHaveFocus();
+
+    fireEvent.keyDown(document, { key: "Tab", shiftKey: true });
+    expect(last).toHaveFocus();
+  });
 });
