@@ -3,6 +3,7 @@ export type ActorId = "employee" | "employer";
 export type StateRevision = number;
 export type AgentAuditEventType =
   | "actor_changed"
+  | "policy_changed"
   | "business_mutation"
   | "proposal_created"
   | "proposal_approved"
@@ -10,6 +11,13 @@ export type AgentAuditEventType =
   | "proposal_executed"
   | "policy_denied";
 export type AgentAuditOutcome = "applied" | "denied" | "recorded";
+export interface PolicyDenial {
+  code: "POLICY_DENIED";
+  message: string;
+  nextStep: string;
+}
+export type PolicyDecision =
+  { permitted: true } | { permitted: false; error: PolicyDenial };
 export type EmployeeTab = "overview" | "shifts" | "learn" | "rewards";
 export type EmployerTab = "dashboard" | "opportunity" | "shifts" | "fairness";
 export type OpportunityCategory = "all" | "shift" | "learning" | "reward";
@@ -273,9 +281,6 @@ export type DemoAction =
     }
   | {
       type: "audit/record";
-      event: Omit<
-        AgentAuditEvent,
-        "id" | "policyRevision" | "stateRevision" | "timestamp"
-      >;
+      eventType: AgentAuditEventType;
     }
   | { type: "activity/dismiss" };

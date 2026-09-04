@@ -98,30 +98,80 @@ describe("createDemoStore", () => {
     expect(store.getState().auditEvents).toHaveLength(1);
   });
 
-  it("records supplied audit outcomes without accepting proposal input", () => {
+  it("rejects employee mutations from the employer actor without changing employee data", () => {
+    const store = createDemoStore();
+    store.dispatch({ type: "session/set-actor", actorId: "employer" });
+    const before = store.getState().employee.goal.savedAmount;
+
+    store.dispatch({
+      type: "employee/allocate-reward",
+      rewardId: "reward-safety",
+      destination: "savings",
+      source: "webmcp",
+    });
+
+    expect(store.getState().employee.goal.savedAmount).toBe(before);
+    expect(store.getState().auditEvents).toEqual([
+      expect.objectContaining({
+        id: "audit-2",
+        actorId: "employer",
+        type: "actor_changed",
+      }),
+      expect.objectContaining({
+        id: "audit-3",
+        actorId: "employer",
+        type: "policy_denied",
+        action: "allocate_reward",
+        summary: "This action is outside the simulated actor scope.",
+        policyRevision: 2,
+        stateRevision: 3,
+      }),
+    ]);
+  });
+
+  it("redacts forged audit actor and free text while retaining a safe event", () => {
     const store = createDemoStore();
 
     store.dispatch({
       type: "audit/record",
+      eventType: "policy_denied",
+      outcome: "denied",
       event: {
-        type: "policy_denied",
-        actorId: "employee",
-        source: "webmcp",
-        action: "create_opportunity_draft",
-        outcome: "denied",
-        summary: "Action is outside the simulated actor scope.",
+        actorId: "employer",
+        action: "raw-user-input",
+        proposalId: "secret-proposal-id",
+        summary: "A raw private goal: School Fees",
       },
-    });
+    } as unknown as Parameters<typeof store.dispatch>[0]);
 
-    expect(store.getState()).toMatchObject({ revision: 2 });
     expect(store.getState().auditEvents).toEqual([
       expect.objectContaining({
-        id: "audit-2",
-        policyRevision: 1,
-        stateRevision: 2,
-        timestamp: "demo-revision-2",
-        summary: "Action is outside the simulated actor scope.",
+        actorId: "employee",
+        type: "policy_denied",
+        action: "policy_denied",
+        summary: "This action is outside the simulated actor scope.",
       }),
     ]);
+    expect(store.getState().auditEvents[0]).not.toHaveProperty("proposalId");
+  });
+
+  it("resets employer scope to the employee fixture with forward policy revisions", () => {
+    const store = createDemoStore();
+    store.dispatch({ type: "session/set-actor", actorId: "employer" });
+
+    store.dispatch({ type: "demo/reset" });
+
+    expect(store.getState()).toMatchObject({
+      mode: "employee",
+      actorSession: { actorId: "employee", policyRevision: 3 },
+      revision: 3,
+    });
+    expect(store.getState().auditEvents.at(-1)).toMatchObject({
+      actorId: "employee",
+      type: "actor_changed",
+      action: "demo/reset",
+      policyRevision: 3,
+      summary: "Reset demo and switched simulated actor scope.",
+    });
   });
 });

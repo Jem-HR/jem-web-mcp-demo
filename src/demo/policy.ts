@@ -1,4 +1,4 @@
-import type { ActorSession, CapabilityPolicy } from "./types";
+import type { ActorSession, CapabilityPolicy, PolicyDecision } from "./types";
 
 const employeeTools = [
   "get_employee_dashboard",
@@ -6,6 +6,8 @@ const employeeTools = [
   "list_employee_opportunities",
   "request_shift",
   "allocate_reward",
+  "update_expenses",
+  "complete_onboarding_plan",
   "prepare_shift_to_goal_plan",
 ] as const;
 
@@ -46,4 +48,20 @@ export function isToolPermitted(
   toolName: string,
 ): boolean {
   return policy.permittedTools.includes(toolName);
+}
+
+export function policyDecisionForTool(
+  policy: CapabilityPolicy,
+  toolName: string,
+): PolicyDecision {
+  if (isToolPermitted(policy, toolName)) return { permitted: true };
+
+  return {
+    permitted: false,
+    error: {
+      code: "POLICY_DENIED",
+      message: "This action is outside the simulated actor scope.",
+      nextStep: "Inspect active context or switch simulated actor scope.",
+    },
+  };
 }

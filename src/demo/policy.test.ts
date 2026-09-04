@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { isToolPermitted, policyForSession } from "./policy";
+import {
+  policyDecisionForTool,
+  isToolPermitted,
+  policyForSession,
+} from "./policy";
 
 describe("policyForSession", () => {
   it("resolves the employee's simulated identity and employee-only tools", () => {
@@ -38,5 +42,25 @@ describe("policyForSession", () => {
     expect(isToolPermitted(policy, "list_fairness_exceptions")).toBe(true);
     expect(isToolPermitted(policy, "get_employee_dashboard")).toBe(false);
     expect(isToolPermitted(policy, "update_savings_goal")).toBe(false);
+  });
+
+  it("returns a recoverable denial when a tool is outside the simulated actor scope", () => {
+    const decision = policyDecisionForTool(
+      policyForSession({
+        actorId: "employer",
+        displayName: "Sipho Khumalo",
+        policyRevision: 2,
+      }),
+      "update_savings_goal",
+    );
+
+    expect(decision).toEqual({
+      permitted: false,
+      error: {
+        code: "POLICY_DENIED",
+        message: "This action is outside the simulated actor scope.",
+        nextStep: "Inspect active context or switch simulated actor scope.",
+      },
+    });
   });
 });

@@ -1,4 +1,5 @@
 import { createInitialDemoState } from "./fixtures";
+import { policyDecisionForTool, policyForSession } from "./policy";
 import type {
   ActionSource,
   ActorId,
@@ -69,6 +70,81 @@ function mutate(
   };
 }
 
+function toolForAction(action: DemoAction): string | null {
+  switch (action.type) {
+    case "employee/replace-goal":
+      return "update_savings_goal";
+    case "employee/replace-expenses":
+      return "update_expenses";
+    case "employee/complete-onboarding":
+      return "complete_onboarding_plan";
+    case "employee/request-shift":
+      return "request_shift";
+    case "employee/allocate-reward":
+      return "allocate_reward";
+    case "employer/save-draft":
+      return "create_opportunity_draft";
+    case "employer/set-validation":
+      return "validate_opportunity";
+    default:
+      return null;
+  }
+}
+
+function recordPolicyDenial(state: DemoState, toolName: string): DemoState {
+  const decision = policyDecisionForTool(
+    policyForSession(state.actorSession),
+    toolName,
+  );
+  if (decision.permitted) return state;
+
+  const event = auditEvent(
+    state,
+    "policy_denied",
+    toolName,
+    decision.error.message,
+    "webmcp",
+  );
+  return {
+    ...state,
+    revision: event.stateRevision,
+    auditEvents: [...state.auditEvents, { ...event, outcome: "denied" }],
+  };
+}
+
+function auditDescriptor(type: AgentAuditEventType): {
+  action: string;
+  summary: string;
+  outcome: AgentAuditEvent["outcome"];
+} {
+  switch (type) {
+    case "actor_changed":
+      return {
+        action: "session/set-actor",
+        summary: "Switched simulated actor scope.",
+        outcome: "recorded",
+      };
+    case "policy_changed":
+      return {
+        action: "policy/changed",
+        summary: "Updated simulated actor policy.",
+        outcome: "recorded",
+      };
+    case "policy_denied":
+      return {
+        action: "policy_denied",
+        summary: "This action is outside the simulated actor scope.",
+        outcome: "denied",
+      };
+    default:
+      return {
+        action: type,
+        summary: "Recorded a simulated agent action.",
+        outcome: "recorded",
+      };
+  }
+}
+
 function activityFor(
   state: DemoState,
   source: ActionSource,
@@ -92,15 +168,32 @@ function copyValidation(
 }
 
 export function demoReducer(state: DemoState, action: DemoAction): DemoState {
+  const toolName = toolForAction(action);
+  if (toolName !== null) {
+    const decision = policyDecisionForTool(
+      policyForSession(state.actorSession),
+      toolName,
+    );
+    if (!decision.permitted) return recordPolicyDenial(state, toolName);
+  }
+
   switch (action.type) {
     case "demo/reset": {
       const initial = createInitialDemoState();
+      const actorChanged = state.actorSession.actorId !== "employee";
+      const policyRevision = state.actorSession.policyRevision + 1;
       return mutate(
         state,
-        { ...initial, onboarding: { completed: false, step: 1 } },
-        "business_mutation",
+        {
+          ...initial,
+          actorSession: sessionForActor("employee", policyRevision),
+          onboarding: { completed: false, step: 1 },
+        },
+        actorChanged ? "actor_changed" : "policy_changed",
         "demo/reset",
-        "Demo reset.",
+        actorChanged
+          ? "Reset demo and switched simulated actor scope."
+          : "Reset demo and refreshed simulated actor policy.",
         "ui",
       );
     }
@@ -369,15 +462,22 @@ export function demoReducer(state: DemoState, action: DemoAction): DemoState {
       );
 
     case "audit/record": {
-      const revision = state.revision + 1;
-      const event: AgentAuditEvent = {
-        ...action.event,
-        id: `audit-${revision}`,
-        policyRevision: state.actorSession.policyRevision,
-        stateRevision: revision,
-        timestamp: `demo-revision-${revision}`,
+      const descriptor = auditDescriptor(action.eventType);
+      const event = auditEvent(
+        state,
+        action.eventType,
+        descriptor.action,
+        descriptor.summary,
+        "system",
+      );
+      return {
+        ...state,
+        revision: event.stateRevision,
+        auditEvents: [
+          ...state.auditEvents,
+          { ...event, outcome: descriptor.outcome },
+        ],
       };
-      return { ...state, revision, auditEvents: [...state.auditEvents, event] };
     }
 
     case "activity/dismiss":
