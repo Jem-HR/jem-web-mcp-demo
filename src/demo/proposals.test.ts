@@ -241,6 +241,28 @@ describe("action proposals", () => {
     expect(replayed).toBe(executed);
   });
 
+  it("does not let another actor reject an employee proposal by ID", () => {
+    const { state, proposal } = proposalState("pending");
+    const employerState: DemoState = {
+      ...state,
+      mode: "employer",
+      actorSession: {
+        actorId: "employer",
+        displayName: "Sipho Khumalo",
+        policyRevision: state.actorSession.policyRevision,
+      },
+    };
+
+    const rejected = demoReducer(employerState, {
+      type: "proposal/reject",
+      proposalId: proposal.id,
+    });
+
+    expect(rejected).toBe(employerState);
+    expect(rejected.proposals[0]?.status).toBe("pending");
+    expect(rejected.auditEvents).toEqual([]);
+  });
+
   it("retains and invalidates outstanding proposals after a business mutation", () => {
     const initial = createInitialDemoState();
     const proposal = {

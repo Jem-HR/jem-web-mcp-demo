@@ -635,7 +635,10 @@ export function demoReducer(state: DemoState, action: DemoAction): DemoState {
       const proposal = findProposalById(state.proposals, action.proposalId);
       if (
         proposal === undefined ||
-        (proposal.status !== "pending" && proposal.status !== "approved")
+        (proposal.status !== "pending" && proposal.status !== "approved") ||
+        proposal.actorId !== state.actorSession.actorId ||
+        proposal.policyRevision !== state.actorSession.policyRevision ||
+        proposal.stateRevision !== state.revision
       ) {
         return state;
       }
