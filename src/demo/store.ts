@@ -5,7 +5,13 @@ import type { DemoState, DemoStore } from "./types";
 export function createDemoStore(
   initialState: DemoState = createInitialDemoState(),
 ): DemoStore {
-  let state = initialState;
+  let state =
+    initialState.mode === initialState.actorSession.actorId
+      ? initialState
+      : demoReducer(initialState, {
+          type: "navigation/set-mode",
+          mode: initialState.mode,
+        });
   const listeners = new Set<() => void>();
 
   return {

@@ -2,6 +2,23 @@ import { describe, expect, it, vi } from "vitest";
 import { createInitialDemoState } from "./fixtures";
 import { createDemoStore } from "./store";
 
+const employerDraft = {
+  id: "draft-opportunity" as const,
+  name: "Reliable attendance",
+  type: "attendance" as const,
+  outcome: "Improve attendance",
+  eligibleSegment: "Retail staff",
+  qualificationRule: "Complete all scheduled shifts",
+  startDate: "2026-09-10",
+  endDate: "2026-09-30",
+  rewardType: "cash" as const,
+  rewardAmount: 120,
+  totalBudget: 50_000,
+  maxPerEmployee: 120,
+  exceptionPolicy: "Manager review",
+  status: "draft" as const,
+};
+
 describe("createDemoStore", () => {
   it("starts on the completed employee dashboard and can reset to onboarding", () => {
     const store = createDemoStore();
@@ -172,6 +189,71 @@ describe("createDemoStore", () => {
       action: "demo/reset",
       policyRevision: 3,
       summary: "Reset demo and switched simulated actor scope.",
+    });
+  });
+
+  it("rejects employee-owned onboarding changes from the employer actor", () => {
+    const store = createDemoStore();
+    store.dispatch({ type: "session/set-actor", actorId: "employer" });
+
+    store.dispatch({ type: "onboarding/set-step", step: 2 });
+
+    expect(store.getState().onboarding.step).toBe(1);
+    expect(store.getState().auditEvents.at(-1)).toMatchObject({
+      type: "policy_denied",
+      action: "complete_onboarding_plan",
+      actorId: "employer",
+    });
+  });
+
+  it("rejects employer mutations from the employee actor", () => {
+    const store = createDemoStore();
+
+    store.dispatch({
+      type: "employer/save-draft",
+      draft: employerDraft,
+      source: "webmcp",
+    });
+
+    expect(store.getState().employer.activeDraft).toBeNull();
+    expect(store.getState().auditEvents.at(-1)).toMatchObject({
+      type: "policy_denied",
+      action: "create_opportunity_draft",
+      actorId: "employee",
+    });
+  });
+
+  it("normalizes malformed runtime audit event types without persisting them", () => {
+    const store = createDemoStore();
+
+    store.dispatch({
+      type: "audit/record",
+      eventType: "private employee goal: School Fees",
+    } as unknown as Parameters<typeof store.dispatch>[0]);
+
+    expect(store.getState().auditEvents).toEqual([
+      expect.objectContaining({
+        type: "policy_denied",
+        action: "audit_event",
+        summary: "Ignored an invalid audit event type.",
+      }),
+    ]);
+  });
+
+  it("makes a navigation role switch update policy before an employer mutation", () => {
+    const store = createDemoStore();
+    store.dispatch({ type: "navigation/set-mode", mode: "employer" });
+
+    store.dispatch({
+      type: "employer/save-draft",
+      draft: employerDraft,
+      source: "ui",
+    });
+
+    expect(store.getState()).toMatchObject({
+      mode: "employer",
+      actorSession: { actorId: "employer", policyRevision: 2 },
+      employer: { activeDraft: { id: "draft-opportunity" } },
     });
   });
 });

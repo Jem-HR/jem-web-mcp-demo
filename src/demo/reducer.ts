@@ -72,6 +72,9 @@ function mutate(
 
 function toolForAction(action: DemoAction): string | null {
   switch (action.type) {
+    case "onboarding/set-step":
+    case "onboarding/complete":
+      return "complete_onboarding_plan";
     case "employee/replace-goal":
       return "update_savings_goal";
     case "employee/replace-expenses":
@@ -89,6 +92,37 @@ function toolForAction(action: DemoAction): string | null {
     default:
       return null;
   }
+}
+
+function isAuditEventType(value: unknown): value is AgentAuditEventType {
+  return (
+    typeof value === "string" &&
+    [
+      "actor_changed",
+      "policy_changed",
+      "business_mutation",
+      "proposal_created",
+      "proposal_approved",
+      "proposal_rejected",
+      "proposal_executed",
+      "policy_denied",
+    ].includes(value)
+  );
+}
+
+function recordInvalidAuditEvent(state: DemoState): DemoState {
+  const event = auditEvent(
+    state,
+    "policy_denied",
+    "audit_event",
+    "Ignored an invalid audit event type.",
+    "system",
+  );
+  return {
+    ...state,
+    revision: event.stateRevision,
+    auditEvents: [...state.auditEvents, { ...event, outcome: "denied" }],
+  };
 }
 
 function recordPolicyDenial(state: DemoState, toolName: string): DemoState {
@@ -462,6 +496,9 @@ export function demoReducer(state: DemoState, action: DemoAction): DemoState {
       );
 
     case "audit/record": {
+      if (!isAuditEventType(action.eventType)) {
+        return recordInvalidAuditEvent(state);
+      }
       const descriptor = auditDescriptor(action.eventType);
       const event = auditEvent(
         state,

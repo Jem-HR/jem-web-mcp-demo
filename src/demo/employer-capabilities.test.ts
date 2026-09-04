@@ -18,9 +18,13 @@ const validDraft = {
   exceptionPolicy: "Approved leave and employer roster changes enter review",
 };
 
+function createEmployerStore(initialState = createInitialDemoState()) {
+  return createDemoStore({ ...initialState, mode: "employer" });
+}
+
 describe("employer capabilities", () => {
   it("previews and saves a draft without launching it", () => {
-    const store = createDemoStore();
+    const store = createEmployerStore();
     const capabilities = createEmployerCapabilities(store);
 
     expect(
@@ -48,7 +52,7 @@ describe("employer capabilities", () => {
   });
 
   it("summarises programmes, non-confirmed shifts, and fairness exceptions", () => {
-    const capabilities = createEmployerCapabilities(createDemoStore());
+    const capabilities = createEmployerCapabilities(createEmployerStore());
 
     expect(capabilities.listProgrammes()).toMatchObject({
       ok: true,
@@ -87,7 +91,7 @@ describe("employer capabilities", () => {
   });
 
   it("rejects malformed read filters without exposing data", () => {
-    const capabilities = createEmployerCapabilities(createDemoStore());
+    const capabilities = createEmployerCapabilities(createEmployerStore());
 
     expect(
       capabilities.listProgrammes({ status: "closed" } as never),
@@ -101,7 +105,7 @@ describe("employer capabilities", () => {
   });
 
   it("rejects malformed drafts without dispatching", () => {
-    const store = createDemoStore();
+    const store = createEmployerStore();
     const capabilities = createEmployerCapabilities(store);
 
     expect(
@@ -123,7 +127,7 @@ describe("employer capabilities", () => {
   });
 
   it("rejects an invalid draft source without dispatching", () => {
-    const store = createDemoStore();
+    const store = createEmployerStore();
     const capabilities = createEmployerCapabilities(store);
 
     expect(
@@ -137,7 +141,7 @@ describe("employer capabilities", () => {
   });
 
   it("blocks a budget below the draft-derived maximum exposure", () => {
-    const store = createDemoStore();
+    const store = createEmployerStore();
     const capabilities = createEmployerCapabilities(store);
     capabilities.createOpportunityDraft({
       ...validDraft,
@@ -163,7 +167,7 @@ describe("employer capabilities", () => {
   });
 
   it("records review-required validation only for the active draft", () => {
-    const store = createDemoStore();
+    const store = createEmployerStore();
     const capabilities = createEmployerCapabilities(store);
     capabilities.createOpportunityDraft({ ...validDraft, confirm: true });
 
@@ -196,7 +200,7 @@ describe("employer capabilities", () => {
   });
 
   it("derives rounded cost and exposure from multiple active draft values", () => {
-    const store = createDemoStore();
+    const store = createEmployerStore();
     const capabilities = createEmployerCapabilities(store);
     capabilities.createOpportunityDraft({
       ...validDraft,
@@ -223,7 +227,7 @@ describe("employer capabilities", () => {
 
   it("keeps the fixed review-required validation DTO when injected exceptions are empty", () => {
     const initial = createInitialDemoState();
-    const store = createDemoStore({
+    const store = createEmployerStore({
       ...initial,
       employer: { ...initial.employer, fairnessExceptions: [] },
     });
@@ -245,7 +249,7 @@ describe("employer capabilities", () => {
   });
 
   it("rejects an invalid validation source without dispatching", () => {
-    const store = createDemoStore();
+    const store = createEmployerStore();
     const capabilities = createEmployerCapabilities(store);
     capabilities.createOpportunityDraft({ ...validDraft, confirm: true });
     const priorActivity = store.getState().activity;
