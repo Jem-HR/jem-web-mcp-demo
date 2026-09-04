@@ -41,6 +41,14 @@ function createShift(
 export function createInitialDemoState(): DemoState {
   return {
     mode: "employee",
+    actorSession: {
+      actorId: "employee",
+      displayName: "Nomsa Dlamini",
+      policyRevision: 1,
+    },
+    revision: 1,
+    auditEvents: [],
+    savingsIntent: null,
     onboarding: { completed: true, step: 1 },
     employee: {
       activeTab: "overview",

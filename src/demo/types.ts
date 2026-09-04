@@ -1,8 +1,50 @@
 export type AppMode = "employee" | "employer";
+export type ActorId = "employee" | "employer";
+export type StateRevision = number;
+export type AgentAuditEventType =
+  | "actor_changed"
+  | "business_mutation"
+  | "proposal_created"
+  | "proposal_approved"
+  | "proposal_rejected"
+  | "proposal_executed"
+  | "policy_denied";
+export type AgentAuditOutcome = "applied" | "denied" | "recorded";
 export type EmployeeTab = "overview" | "shifts" | "learn" | "rewards";
 export type EmployerTab = "dashboard" | "opportunity" | "shifts" | "fairness";
 export type OpportunityCategory = "all" | "shift" | "learning" | "reward";
 export type ActionSource = "ui" | "webmcp";
+
+/** Simulated client-only actor data; production identity belongs on a server. */
+export interface ActorSession {
+  actorId: ActorId;
+  displayName: string;
+  policyRevision: StateRevision;
+}
+
+export interface CapabilityPolicy {
+  actorId: ActorId;
+  actorLabel: string;
+  revision: StateRevision;
+  viewMode: AppMode;
+  permittedTools: readonly string[];
+  protectedDataClasses: readonly string[];
+  consequentialTools: readonly string[];
+}
+
+export interface AgentAuditEvent {
+  id: string;
+  type: AgentAuditEventType;
+  actorId: ActorId;
+  source: ActionSource | "system";
+  action: string;
+  proposalId?: string;
+  outcome: AgentAuditOutcome;
+  policyRevision: StateRevision;
+  stateRevision: StateRevision;
+  summary: string;
+  timestamp: string;
+}
 export type ExpenseKey =
   | "housing"
   | "transport"
@@ -160,6 +202,10 @@ export interface ActivityNotice {
 
 export interface DemoState {
   mode: AppMode;
+  actorSession: ActorSession;
+  revision: StateRevision;
+  auditEvents: AgentAuditEvent[];
+  savingsIntent: null;
   onboarding: { completed: boolean; step: 1 | 2 | 3 | 4 };
   employee: {
     activeTab: EmployeeTab;
@@ -190,6 +236,7 @@ export interface DemoStore {
 
 export type DemoAction =
   | { type: "demo/reset" }
+  | { type: "session/set-actor"; actorId: ActorId }
   | { type: "navigation/set-mode"; mode: AppMode }
   | { type: "navigation/set-employee-tab"; tab: EmployeeTab }
   | { type: "navigation/set-employer-tab"; tab: EmployerTab }
@@ -223,5 +270,12 @@ export type DemoAction =
       type: "employer/set-validation";
       validation: OpportunityValidation;
       source: ActionSource;
+    }
+  | {
+      type: "audit/record";
+      event: Omit<
+        AgentAuditEvent,
+        "id" | "policyRevision" | "stateRevision" | "timestamp"
+      >;
     }
   | { type: "activity/dismiss" };
