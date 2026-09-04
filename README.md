@@ -1,101 +1,177 @@
 # Jem Unlocked
 
-Jem Unlocked is a complete, deterministic React prototype for the [OpenAI WebMCP Challenge](https://openai.com/webmcp-challenge/). It demonstrates a shared, resettable experience for Nomsa’s employee journey and Sipho’s employer journey. UI interactions and WebMCP tools use a shared capability layer, with the documented exception that private expense updates remain UI-only.
+**An agent that can act for a frontline worker without ever seeing what she is
+saving for.**
 
-It is not a production Jem service. Read the local [design specification](docs/superpowers/specs/2026-08-28-jem-unlocked-prototype-design.md) and [implementation plan](docs/superpowers/plans/2026-08-28-jem-unlocked-prototype.md) for the agreed scope and implementation record.
+Jem Unlocked is a WebMCP prototype built for the
+[OpenAI WebMCP Challenge](https://openai.com/webmcp-challenge/). It models the
+real product surface of [Jem](https://www.jemhr.com), an HR and financial
+wellbeing platform used by South African frontline workers — retail staff,
+security officers, cleaners — and the employers who schedule and pay them.
 
-## Prototype data and limits
+Two people share one web app. Nomsa is a senior sales associate saving for
+school fees. Sipho runs workforce programmes for her employer. The same page
+exposes tools to an AI agent, and **the employer's tools cannot return a
+worker's private financial data** — not by prompt instruction, but because the
+employer capability layer only ever produces aggregate and anonymised data,
+enforced by privacy sentinel tests.
 
-Everything runs client-side with fixed illustrative data. There is no authentication, server, database, localStorage persistence, payroll, scheduling, HR, or financial-system connection. Employee and employer names, including initial-plus-surname fairness labels, are illustrative pseudonyms only; they are not a production anonymity guarantee.
+**Live demo:** https://jem-hr.github.io/jem-web-mcp-demo/
 
-The prototype can demonstrate state changes, but it cannot change employment contracts, assign shifts, launch programmes, issue payroll or rewards, resolve fairness cases, or move money.
+## Why this is a WebMCP problem, not a chatbot problem
 
-## Requirements and local setup
+Frontline workers do not sit at desks. The gap between "I want to pick up
+Saturday's shift and put the extra towards school fees" and the six taps needed
+to do it is where engagement dies. An agent can close that gap — but only if it
+can act on the _real_ application state, not a scraped approximation of it.
 
-- Node.js 22.22.2 or newer
-- npm 10 or newer
+WebMCP is the right primitive because the page already knows three things a
+server-side agent integration does not:
+
+1. **Who is looking.** The app owns the privacy boundary. Employer tools are
+   wired to a capability layer that cannot produce private employee fields, so
+   the boundary holds regardless of what the agent is asked to do.
+2. **What is currently on screen.** A confirmed tool call updates the same
+   in-memory store the UI renders, so the human watches the agent's work land
+   in the interface in real time.
+3. **What is consequential.** Money-adjacent actions are gated behind a
+   preview-then-confirm contract the page controls, so an agent cannot move a
+   worker's savings on a single ambiguous instruction.
+
+## What people and agents can do together here
+
+Previously each of these was a multi-screen manual task, or impossible for an
+agent that could only read the DOM:
+
+- "Find me a shift this weekend and put the earnings toward school fees" —
+  the agent reads opportunities, previews the shift request and the goal impact
+  in one turn, and applies both only after Nomsa confirms.
+- "Am I on track?" — the agent reads the live dashboard, not a stale export.
+- Sipho asks "who is being under-offered shifts?" — the agent reads anonymised
+  fairness exceptions and can draft a programme, while remaining unable to
+  retrieve any individual's private financial data.
+
+## Testing WebMCP
+
+WebMCP is progressive enhancement: a browser without `document.modelContext`
+still renders the full prototype.
+
+**ChatGPT in-app browser** — open the live demo, then open **Site tools** from
+the address bar. The Jem Unlocked tools appear there.
+
+**Google Chrome 149+** — enable `chrome://flags/#enable-webmcp-testing`,
+restart, then open the live demo in a top-level tab.
+
+Walkthrough prompts are in the
+[challenge demo script](docs/challenge-demo-script.md).
+
+## How WebMCP is implemented
+
+Every tool is registered through `document.modelContext.registerTool` with a
+closed input schema, an `AbortSignal` for clean teardown, and a runtime
+validator that mirrors the schema so a malformed agent call is rejected with a
+structured error rather than a thrown exception:
+
+```js
+document.modelContext.registerTool(
+  {
+    name: "request_shift",
+    title: "Request shift",
+    description:
+      "Prepare a request for an available employee shift. confirm:false previews without mutation; set confirm:true only after explicit user confirmation to apply it.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        shiftId: { type: "string", minLength: 1 },
+        confirm: { type: "boolean" },
+      },
+      required: ["shiftId", "confirm"],
+      additionalProperties: false,
+    },
+    annotations: { readOnlyHint: false },
+    execute: async (input) => capabilities.requestShift(input, "webmcp"),
+  },
+  { signal: controller.signal },
+);
+```
+
+Tool handlers and React event handlers call the **same capability layer**
+(`src/demo/capabilities.ts`), so there is no separate agent code path that can
+drift from the UI. That shared layer is what makes agent actions show up
+visibly on screen.
+
+### Tool catalogue
+
+Schemas are closed objects: unexpected fields are rejected.
+
+| Tool                          | Reads / writes | Notes                                        |
+| ----------------------------- | -------------- | -------------------------------------------- |
+| `get_app_status`              | read           | Prototype status                             |
+| `get_employee_dashboard`      | read           | Nomsa's private dashboard                    |
+| `update_savings_goal`         | **write**      | Preview, then confirm                        |
+| `list_employee_opportunities` | read           | Shifts, learning, rewards                    |
+| `request_shift`               | **write**      | Preview, then confirm                        |
+| `allocate_reward`             | **write**      | To savings or voucher; preview, then confirm |
+| `get_employer_dashboard`      | read           | Aggregates only                              |
+| `list_programmes`             | read           | Aggregates only                              |
+| `create_opportunity_draft`    | **write**      | Preview, then confirm; stays a draft         |
+| `validate_opportunity`        | analysis       | Local draft analysis; cannot launch          |
+| `list_open_shifts`            | read           | Aggregates only                              |
+| `list_fairness_exceptions`    | read           | Anonymised                                   |
+
+The four consequential tools are `update_savings_goal`, `request_shift`,
+`allocate_reward` and `create_opportunity_draft`. Call each with
+`confirm: false` first, present the returned preview, obtain explicit user
+confirmation, then call with `confirm: true`. **A preview never mutates state.**
+
+`update_expenses` is deliberately UI-only — there is no WebMCP expense tool, to
+show that exposing a capability to an agent is a decision, not a default.
+
+## The privacy boundary
+
+Employer tools return only aggregate or anonymised DTOs. They cannot expose
+Nomsa's goal, saved amount, target amount, monthly contribution, privacy choice
+or expenses. This is covered by privacy sentinel tests that assert every
+employer tool and DTO against the private field set — see
+`src/demo/privacy.test.ts`.
+
+The initial-plus-surname fairness labels support the demonstration only and are
+not a production anonymity guarantee.
+
+## Running locally
+
+Requires **Node.js 22.22.2+** and npm 10+. The test suite will not run on
+Node 20 — jsdom raises `ERR_REQUIRE_ESM`.
 
 ```bash
 npm install
-npm run dev
+npm run dev     # http://localhost:5173
+npm run check   # vitest, eslint, prettier, tsc, production build
 ```
 
-Vite serves the prototype at `http://localhost:5173` by default.
+`npm run check` runs 122 tests across 21 files.
 
-Run the complete quality gate with:
+## Prototype scope and limits
 
-```bash
-npm run check
-```
+Everything runs client-side against fixed illustrative data. There is no
+authentication, server, database, persistence, payroll, scheduling or financial
+system behind it, and no real Jem customer data. Names are pseudonyms.
 
-The check runs Vitest, ESLint, Prettier, TypeScript, and a production Vite build.
+The prototype demonstrates state changes but cannot change employment
+contracts, assign shifts, launch programmes, issue payroll or rewards, resolve
+fairness cases, or move money. A recorded shift request is not an assignment; a
+saved opportunity remains a draft; a reward allocation issues nothing.
 
-## UI journeys
-
-The default landing view is Nomsa Dlamini’s completed employee dashboard. Its four tabs are Overview, Shifts, Learn, and Rewards. Use the header mode control to open the Employer Hub for aggregate programme, opportunity, shift, and fairness views.
-
-Use **Reset demo** to restore every fixture and open onboarding at step 1. Completing onboarding returns to the populated employee dashboard. A page refresh instead restores the known completed employee landing state because the prototype persists nothing to localStorage or a server.
-
-## WebMCP testing
-
-WebMCP is progressive enhancement: a browser without `document.modelContext` still renders the prototype.
-
-### ChatGPT in-app Browser
-
-1. Start the local app, then open it in ChatGPT’s in-app Browser.
-2. Open **Site tools** from the browser address bar.
-3. Confirm the Jem Unlocked tools are available and exercise the read, preview, and confirmed examples in the [challenge demo script](docs/challenge-demo-script.md).
-
-### Google Chrome
-
-1. Open `chrome://flags/#enable-webmcp-testing`.
-2. Enable WebMCP testing and restart Chrome.
-3. Open the local app in a top-level tab, then use a compatible browser agent to discover the tools.
-
-## WebMCP tool catalogue
-
-Tools are registered in this order. Schemas are closed objects: unexpected fields are rejected.
-
-1. `get_app_status` — read the completed prototype status.
-2. `get_employee_dashboard` — read Nomsa’s private employee dashboard.
-3. `update_savings_goal` — preview, then update a private savings goal.
-4. `list_employee_opportunities` — read available shift, learning, and reward opportunities.
-5. `request_shift` — preview, then record a shift request.
-6. `allocate_reward` — preview, then allocate an earned reward to savings or a voucher.
-7. `get_employer_dashboard` — read aggregate employer metrics.
-8. `list_programmes` — read aggregate programme operations.
-9. `create_opportunity_draft` — preview, then save an aggregate opportunity draft.
-10. `validate_opportunity` — run local aggregate draft analysis.
-11. `list_open_shifts` — read aggregate open-shift operations.
-12. `list_fairness_exceptions` — read anonymised fairness exceptions.
-
-The four consequential tools are `update_savings_goal`, `request_shift`, `allocate_reward`, and `create_opportunity_draft`. Call each with `confirm: false` first, present the returned preview, ask for explicit user confirmation, and only then call it with `confirm: true`. A preview must not mutate state.
-
-`validate_opportunity` updates local analysis state only and needs no confirmation. It cannot approve or launch a programme. `update_expenses` is intentionally UI-only: there is no WebMCP expense tool.
-
-## Privacy and safety boundary
-
-The employee dashboard and goal tools handle private employee data. Employer tools return only aggregate operational or anonymised DTOs; they cannot expose Nomsa’s goal, saved amount, target amount, monthly contribution, privacy choice, or expenses. The prototype’s initial-plus-surname labels support the demonstration only and must not be treated as a production privacy guarantee.
-
-State-changing tools use previews and explicit confirmation. They remain demonstrations: a recorded shift request is not an assignment, a saved opportunity remains a draft, and a reward allocation does not issue a real reward or payment.
+**Reset demo** in the header restores every fixture and reopens onboarding.
 
 ## Architecture
 
-- `src/demo` contains fixtures, the resettable store, selectors, and shared capabilities.
-- `src/employee` and `src/employer` render the two product experiences.
-- `src/webmcp` contains strict tool adapters and WebMCP registration.
+- `src/demo` — fixtures, resettable store, selectors, shared capability layer
+- `src/employee`, `src/employer` — the two product experiences
+- `src/webmcp` — tool adapters, strict input validation, registration
 
-React interactions and tool handlers call the same capabilities, so a confirmed tool action updates the visible in-memory UI state.
-
-## Challenge submission checklist
-
-Prepare these items before submitting; this list does not claim that deployment or submission is complete.
-
-- [x] Repository-local prototype and tool documentation prepared.
-- [x] Local quality command documented.
-- [ ] Public deployment URL prepared.
-- [ ] Screenshots or demo video prepared.
-- [ ] Challenge submission completed.
+Design notes and the implementation record are in
+[`docs/`](docs/superpowers/specs/2026-08-28-jem-unlocked-prototype-design.md).
 
 ## Licence
 
