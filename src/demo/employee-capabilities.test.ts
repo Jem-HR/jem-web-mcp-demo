@@ -1,0 +1,265 @@
+import { describe, expect, it } from "vitest";
+import { createEmployeeCapabilities } from "./employee-capabilities";
+import { createDemoStore } from "./store";
+
+describe("employee capabilities", () => {
+  it("reads the dashboard without returning exact expenses", () => {
+    const result = createEmployeeCapabilities(createDemoStore()).getDashboard();
+
+    expect(result).toMatchObject({ ok: true, status: "read" });
+    expect(JSON.stringify(result)).not.toContain("dependants");
+  });
+
+  it("previews then applies a valid goal update", () => {
+    const store = createDemoStore();
+    const capabilities = createEmployeeCapabilities(store);
+    const input = {
+      name: "December Fund",
+      emoji: "✨",
+      targetAmount: 8000,
+      savedAmount: 2520,
+      targetDate: "2026-12-01",
+      monthlyContribution: 500,
+      isPrivate: true,
+    };
+
+    const preview = capabilities.updateSavingsGoal({
+      ...input,
+      confirm: false,
+    });
+    expect(preview).toMatchObject({
+      ok: true,
+      status: "preview",
+      warnings: [
+        "This changes private employee demo data only; it does not move money.",
+      ],
+    });
+    expect(store.getState().employee.goal.name).toBe("School Fees");
+
+    const applied = capabilities.updateSavingsGoal({
+      ...input,
+      confirm: true,
+    });
+    expect(applied).toMatchObject({
+      ok: true,
+      status: "applied",
+    });
+    expect(applied).not.toHaveProperty("warnings");
+    expect(store.getState().employee.goal.name).toBe("December Fund");
+    expect(store.getState().activity?.source).toBe("webmcp");
+  });
+
+  it("returns a self-contained shift preview and keeps requests idempotent", () => {
+    const capabilities = createEmployeeCapabilities(createDemoStore());
+
+    expect(
+      capabilities.requestShift({
+        shiftId: "shift-sat-rosebank",
+        confirm: false,
+      }),
+    ).toEqual({
+      ok: true,
+      status: "preview",
+      summary: "Shift request ready to confirm.",
+      warnings: [
+        "This records a request only; it does not assign the shift or guarantee earnings.",
+      ],
+      data: {
+        shiftId: "shift-sat-rosebank",
+        status: "requested",
+        date: "2026-09-05",
+        startTime: "08:00",
+        endTime: "17:00",
+        hours: 9,
+        site: "Rosebank Mall",
+        eligibility: "Active Pick n Pay retail employee at the listed site",
+        deadline: "2026-09-04",
+        estimatedEarnings: 480,
+        estimateKind: "estimated_before_deductions",
+        alreadyRequested: false,
+      },
+    });
+
+    expect(
+      capabilities.requestShift({
+        shiftId: "shift-sat-rosebank",
+        confirm: true,
+      }),
+    ).toMatchObject({
+      ok: true,
+      status: "applied",
+    });
+    expect(
+      capabilities.requestShift({
+        shiftId: "shift-sat-rosebank",
+        confirm: true,
+      }),
+    ).toMatchObject({
+      ok: true,
+      status: "applied",
+      data: { alreadyRequested: true },
+    });
+  });
+
+  it("warns before reward allocation and rejects unavailable rewards", () => {
+    const capabilities = createEmployeeCapabilities(createDemoStore());
+
+    const preview = capabilities.allocateReward({
+      rewardId: "reward-safety",
+      destination: "savings",
+      confirm: false,
+    });
+    expect(preview).toMatchObject({
+      ok: true,
+      status: "preview",
+      warnings: [
+        "This changes only the local demo allocation; it does not issue a reward or move money.",
+      ],
+    });
+    const applied = capabilities.allocateReward({
+      rewardId: "reward-safety",
+      destination: "savings",
+      confirm: true,
+    });
+    expect(applied).toMatchObject({ ok: true, status: "applied" });
+    expect(applied).not.toHaveProperty("warnings");
+
+    expect(
+      capabilities.allocateReward({
+        rewardId: "reward-reliability",
+        destination: "savings",
+        confirm: true,
+      }),
+    ).toMatchObject({
+      ok: false,
+      error: { code: "REWARD_NOT_EARNED" },
+    });
+  });
+
+  it("validates and updates employee-only expenses through the capability", () => {
+    const store = createDemoStore();
+    const capabilities = createEmployeeCapabilities(store);
+
+    expect(
+      capabilities.updateExpenses(
+        { ...store.getState().employee.expenses, food: -1 },
+        "ui",
+      ),
+    ).toMatchObject({
+      ok: false,
+      error: { code: "INVALID_INPUT" },
+    });
+    expect(
+      capabilities.updateExpenses(
+        { ...store.getState().employee.expenses, food: 850 },
+        "ui",
+      ),
+    ).toMatchObject({
+      ok: true,
+      status: "applied",
+    });
+    expect(store.getState().employee.expenses.food).toBe(850);
+  });
+
+  it("rejects expenses when the UI source is omitted without dispatching", () => {
+    const store = createDemoStore();
+    const capabilities = createEmployeeCapabilities(store);
+
+    expect(
+      capabilities.updateExpenses({
+        ...store.getState().employee.expenses,
+        food: 850,
+      }),
+    ).toMatchObject({
+      ok: false,
+      error: { code: "UNSUPPORTED_WEBMCP" },
+    });
+    expect(store.getState().employee.expenses.food).toBe(800);
+    expect(store.getState().activity).toBeNull();
+  });
+
+  it("rejects malformed shift requests without dispatching", () => {
+    const store = createDemoStore();
+    const capabilities = createEmployeeCapabilities(store);
+
+    expect(
+      capabilities.requestShift({ shiftId: "shift-sat-rosebank" } as never),
+    ).toMatchObject({
+      ok: false,
+      error: { code: "INVALID_INPUT" },
+    });
+    expect(
+      capabilities.requestShift({ shiftId: "", confirm: true } as never),
+    ).toMatchObject({
+      ok: false,
+      error: { code: "INVALID_INPUT" },
+    });
+    expect(
+      store
+        .getState()
+        .employee.shifts.find((shift) => shift.id === "shift-sat-rosebank")
+        ?.status,
+    ).toBe("available");
+    expect(store.getState().activity).toBeNull();
+  });
+
+  it("rejects malformed reward allocations without dispatching", () => {
+    const store = createDemoStore();
+    const capabilities = createEmployeeCapabilities(store);
+
+    expect(
+      capabilities.allocateReward({
+        rewardId: "reward-safety",
+        destination: "cash",
+        confirm: true,
+      } as never),
+    ).toMatchObject({
+      ok: false,
+      error: { code: "INVALID_INPUT" },
+    });
+    expect(
+      capabilities.allocateReward({
+        rewardId: "reward-safety",
+        destination: "savings",
+      } as never),
+    ).toMatchObject({
+      ok: false,
+      error: { code: "INVALID_INPUT" },
+    });
+    expect(store.getState().employee.goal.savedAmount).toBe(2520);
+    expect(
+      store
+        .getState()
+        .employee.rewards.find((reward) => reward.id === "reward-safety")
+        ?.status,
+    ).toBe("earned");
+    expect(store.getState().activity).toBeNull();
+  });
+
+  it("allows allocation only for an earned and unallocated reward", () => {
+    const initialState = createDemoStore().getState();
+    const store = createDemoStore({
+      ...initialState,
+      employee: {
+        ...initialState.employee,
+        rewards: initialState.employee.rewards.map((reward) =>
+          reward.id === "reward-safety"
+            ? { ...reward, status: "allocated", allocatedTo: null }
+            : reward,
+        ),
+      },
+    });
+
+    expect(
+      createEmployeeCapabilities(store).allocateReward({
+        rewardId: "reward-safety",
+        destination: "savings",
+        confirm: true,
+      }),
+    ).toMatchObject({
+      ok: false,
+      error: { code: "REWARD_NOT_EARNED" },
+    });
+    expect(store.getState().employee.goal.savedAmount).toBe(2520);
+  });
+});
