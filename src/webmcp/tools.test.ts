@@ -2,7 +2,11 @@ import { describe, expect, it } from "vitest";
 
 import { createDemoCapabilities } from "../demo/capabilities";
 import { createDemoStore } from "../demo/store";
-import { createWebMcpTools, getAppStatusTool } from "./tools";
+import {
+  createExposedWebMcpTools,
+  createWebMcpTools,
+  getAppStatusTool,
+} from "./tools";
 
 describe("getAppStatusTool", () => {
   it("declares a narrow read-only tool schema", () => {
@@ -81,5 +85,70 @@ describe("getAppStatusTool", () => {
       "sk-protected-key": "sk-protected-value",
     });
     expect(JSON.stringify(redacted)).not.toContain("sk-protected");
+  });
+});
+
+describe("createExposedWebMcpTools", () => {
+  const capabilities = () => createDemoCapabilities(createDemoStore());
+
+  it("exposes only the employee surface in employee mode", () => {
+    const tools = createExposedWebMcpTools(capabilities(), "employee");
+
+    expect(tools.map((tool) => tool.name)).toEqual([
+      "get_app_status",
+      "get_employee_dashboard",
+      "update_savings_goal",
+      "list_employee_opportunities",
+      "request_shift",
+      "allocate_reward",
+    ]);
+  });
+
+  it("exposes only the employer surface in employer mode", () => {
+    const tools = createExposedWebMcpTools(capabilities(), "employer");
+
+    expect(tools.map((tool) => tool.name)).toEqual([
+      "get_app_status",
+      "get_employer_dashboard",
+      "list_programmes",
+      "create_opportunity_draft",
+      "validate_opportunity",
+      "list_open_shifts",
+      "list_fairness_exceptions",
+    ]);
+  });
+
+  it("never exposes an employee-private tool to the employer surface", () => {
+    const exposed = createExposedWebMcpTools(capabilities(), "employer").map(
+      (tool) => tool.name,
+    );
+
+    for (const privateTool of [
+      "get_employee_dashboard",
+      "update_savings_goal",
+      "request_shift",
+      "allocate_reward",
+    ]) {
+      expect(exposed).not.toContain(privateTool);
+    }
+  });
+
+  it("keeps every catalogue tool reachable from exactly one mode", () => {
+    const catalogue = createWebMcpTools(capabilities()).map(
+      (tool) => tool.name,
+    );
+    const employee = createExposedWebMcpTools(capabilities(), "employee").map(
+      (tool) => tool.name,
+    );
+    const employer = createExposedWebMcpTools(capabilities(), "employer").map(
+      (tool) => tool.name,
+    );
+
+    expect(new Set([...employee, ...employer])).toEqual(new Set(catalogue));
+    expect(
+      employee.filter(
+        (name) => employer.includes(name) && name !== "get_app_status",
+      ),
+    ).toEqual([]);
   });
 });

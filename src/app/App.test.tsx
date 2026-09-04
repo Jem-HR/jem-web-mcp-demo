@@ -52,7 +52,7 @@ describe("App", () => {
     expect(screen.getByText("Nomsa Dlamini")).toBeInTheDocument();
   });
 
-  it("registers the stable twelve-tool facade once across ordinary state transitions and aborts it on unmount", async () => {
+  it("registers only the active employee surface, without churn on ordinary transitions, and aborts it on unmount", async () => {
     const registerTool = vi.fn<WebMCP.ModelContext["registerTool"]>();
     registerTool.mockResolvedValue(undefined);
     setModelContext(createModelContext(registerTool));
@@ -60,9 +60,8 @@ describe("App", () => {
     const view = render(<App />);
 
     expect(
-      await screen.findByText("WebMCP is ready with 12 tools."),
+      await screen.findByText("WebMCP is ready with 6 tools."),
     ).toBeInTheDocument();
-    expect(registerTool).toHaveBeenCalledTimes(12);
     expect(registerTool.mock.calls.map(([tool]) => tool.name)).toEqual([
       "get_app_status",
       "get_employee_dashboard",
@@ -70,12 +69,6 @@ describe("App", () => {
       "list_employee_opportunities",
       "request_shift",
       "allocate_reward",
-      "get_employer_dashboard",
-      "list_programmes",
-      "create_opportunity_draft",
-      "validate_opportunity",
-      "list_open_shifts",
-      "list_fairness_exceptions",
     ]);
     const signals = registerTool.mock.calls.map(
       ([, options]) => options?.signal,
@@ -83,12 +76,50 @@ describe("App", () => {
     expect(new Set(signals).size).toBe(1);
     expect(signals[0]?.aborted).toBe(false);
 
-    fireEvent.click(screen.getByRole("button", { name: "Employer Hub" }));
-    fireEvent.click(screen.getByRole("tab", { name: "Manage Shifts" }));
-    await waitFor(() => expect(registerTool).toHaveBeenCalledTimes(12));
+    // Moving between tabs inside a mode must not re-register anything.
+    fireEvent.click(screen.getByRole("tab", { name: "Shifts" }));
+    fireEvent.click(screen.getByRole("tab", { name: "Rewards" }));
+    await waitFor(() => expect(registerTool).toHaveBeenCalledTimes(6));
+    expect(signals[0]?.aborted).toBe(false);
 
     view.unmount();
     expect(signals[0]?.aborted).toBe(true);
+  });
+
+  it("swaps the registered surface when the mode changes, so no employee-private tool stays callable", async () => {
+    const registerTool = vi.fn<WebMCP.ModelContext["registerTool"]>();
+    registerTool.mockResolvedValue(undefined);
+    setModelContext(createModelContext(registerTool));
+
+    render(<App />);
+
+    expect(
+      await screen.findByText("WebMCP is ready with 6 tools."),
+    ).toBeInTheDocument();
+    const employeeSignal = registerTool.mock.calls[0]?.[1]?.signal;
+    registerTool.mockClear();
+
+    fireEvent.click(screen.getByRole("button", { name: "Employer Hub" }));
+
+    expect(
+      await screen.findByText("WebMCP is ready with 7 tools."),
+    ).toBeInTheDocument();
+
+    // The employee registration is torn down, not merely shadowed.
+    expect(employeeSignal?.aborted).toBe(true);
+
+    const employerTools = registerTool.mock.calls.map(([tool]) => tool.name);
+    expect(employerTools).toEqual([
+      "get_app_status",
+      "get_employer_dashboard",
+      "list_programmes",
+      "create_opportunity_draft",
+      "validate_opportunity",
+      "list_open_shifts",
+      "list_fairness_exceptions",
+    ]);
+    expect(employerTools).not.toContain("get_employee_dashboard");
+    expect(employerTools).not.toContain("update_savings_goal");
   });
 
   it("contains registration errors behind a non-sensitive readiness state", async () => {

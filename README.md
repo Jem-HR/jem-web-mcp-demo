@@ -10,11 +10,15 @@ wellbeing platform used by South African frontline workers — retail staff,
 security officers, cleaners — and the employers who schedule and pay them.
 
 Two people share one web app. Nomsa is a senior sales associate saving for
-school fees. Sipho runs workforce programmes for her employer. The same page
-exposes tools to an AI agent, and **the employer's tools cannot return a
-worker's private financial data** — not by prompt instruction, but because the
-employer capability layer only ever produces aggregate and anonymised data,
-enforced by privacy sentinel tests.
+school fees. Sipho runs workforce programmes at her employer. The same page
+exposes tools to an AI agent — and **which tools exist depends on who is
+looking.** While the Employer Hub is open, no employee-private tool is
+registered at all: `document.modelContext` has nothing that can read Nomsa's
+savings goal, so there is no instruction an agent could be given to retrieve
+it.
+
+That is the part a server-side tool host cannot do. Registration is bound to
+what is on screen.
 
 **Live demo:** https://jem-hr.github.io/jem-web-mcp-demo/
 
@@ -28,9 +32,11 @@ can act on the _real_ application state, not a scraped approximation of it.
 WebMCP is the right primitive because the page already knows three things a
 server-side agent integration does not:
 
-1. **Who is looking.** The app owns the privacy boundary. Employer tools are
-   wired to a capability layer that cannot produce private employee fields, so
-   the boundary holds regardless of what the agent is asked to do.
+1. **Who is looking.** Tool registration follows the active mode, so the
+   privacy boundary is structural rather than instructed. Employer tools are
+   additionally wired to a capability layer that cannot produce private
+   employee fields — two independent layers, so a mistake in either one does
+   not leak.
 2. **What is currently on screen.** A confirmed tool call updates the same
    in-memory store the UI renders, so the human watches the agent's work land
    in the interface in real time.
@@ -43,13 +49,16 @@ server-side agent integration does not:
 Previously each of these was a multi-screen manual task, or impossible for an
 agent that could only read the DOM:
 
-- "Find me a shift this weekend and put the earnings toward school fees" —
-  the agent reads opportunities, previews the shift request and the goal impact
-  in one turn, and applies both only after Nomsa confirms.
-- "Am I on track?" — the agent reads the live dashboard, not a stale export.
+- "What shifts can I pick up this Saturday?" — the agent lists real open
+  shifts and returns a preview with hours and estimated earnings before
+  deductions, then records the request only after Nomsa confirms.
+- "Put my safety award into the school fees goal" — the agent previews the
+  allocation, and on confirmation the goal ring, the total and the activity
+  feed all move on screen.
+- "Am I on track?" — the agent reads live dashboard state, not a stale export.
 - Sipho asks "who is being under-offered shifts?" — the agent reads anonymised
-  fairness exceptions and can draft a programme, while remaining unable to
-  retrieve any individual's private financial data.
+  fairness exceptions and can draft a programme against them. Ask that same
+  agent what Nomsa is saving for and it has no tool that can answer.
 
 ## Testing WebMCP
 
@@ -57,7 +66,8 @@ WebMCP is progressive enhancement: a browser without `document.modelContext`
 still renders the full prototype.
 
 **ChatGPT in-app browser** — open the live demo, then open **Site tools** from
-the address bar. The Jem Unlocked tools appear there.
+the address bar. You will see six tools on the employee view; switch to the
+Employer Hub and the list becomes a different seven.
 
 **Google Chrome 149+** — enable `chrome://flags/#enable-webmcp-testing`,
 restart, then open the live demo in a top-level tab.
@@ -102,6 +112,19 @@ visibly on screen.
 
 ### Tool catalogue
 
+Twelve tools exist. **Six or seven are registered at any one time**, because
+registration follows the mode on screen — so if you count tools in Site tools
+and see six, that is the design working, not tools failing to load:
+
+| Mode on screen     | Registered tools                               |
+| ------------------ | ---------------------------------------------- |
+| Employee (default) | 6 — `get_app_status` + the five employee tools |
+| Employer Hub       | 7 — `get_app_status` + the six employer tools  |
+
+Switching mode aborts the previous registration's `AbortSignal`, which
+unregisters that whole set before the new one is registered. `get_app_status`
+is the only tool present in both.
+
 Schemas are closed objects: unexpected fields are rejected.
 
 | Tool                          | Reads / writes | Notes                                        |
@@ -129,11 +152,18 @@ show that exposing a capability to an agent is a decision, not a default.
 
 ## The privacy boundary
 
-Employer tools return only aggregate or anonymised DTOs. They cannot expose
-Nomsa's goal, saved amount, target amount, monthly contribution, privacy choice
-or expenses. This is covered by privacy sentinel tests that assert every
-employer tool and DTO against the private field set — see
-`src/demo/privacy.test.ts`.
+Two independent layers, because one is not enough for financial data:
+
+1. **Registration.** While the Employer Hub is open, employee-private tools are
+   not registered, so an agent has nothing to call. Verified in
+   `src/app/App.test.tsx`, which asserts the employee registration's signal is
+   aborted on mode change and that no employee-private tool appears in the
+   employer set.
+2. **Projection.** Even so, employer tools return only aggregate or anonymised
+   DTOs. They cannot expose Nomsa's goal, saved amount, target amount, monthly
+   contribution, privacy choice or expenses. Privacy sentinel tests assert
+   every employer tool and DTO against the private field set — see
+   `src/demo/privacy.test.ts`.
 
 The initial-plus-surname fairness labels support the demonstration only and are
 not a production anonymity guarantee.

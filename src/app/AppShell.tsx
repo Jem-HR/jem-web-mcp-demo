@@ -3,17 +3,20 @@ import { useMemo } from "react";
 import { useDemoCapabilities, useDemoSelector } from "../demo/DemoProvider";
 import { EmployeeExperience } from "../employee/EmployeeExperience";
 import { EmployerExperience } from "../employer/EmployerExperience";
-import { createWebMcpTools } from "../webmcp/tools";
+import { createExposedWebMcpTools } from "../webmcp/tools";
 import { useWebMcpStatus } from "../webmcp/use-webmcp-status";
 import { OnboardingFlow } from "../onboarding/OnboardingFlow";
 import { AppHeader } from "./AppHeader";
 
 export function AppShell() {
   const capabilities = useDemoCapabilities();
-  const tools = useMemo(() => createWebMcpTools(capabilities), [capabilities]);
-  const webMcpStatus = useWebMcpStatus(tools);
   const activity = useDemoSelector((state) => state.activity);
   const mode = useDemoSelector((state) => state.mode);
+  const tools = useMemo(
+    () => createExposedWebMcpTools(capabilities, mode),
+    [capabilities, mode],
+  );
+  const webMcpStatus = useWebMcpStatus(tools);
   const onboardingComplete = useDemoSelector(
     (state) => state.onboarding.completed,
   );

@@ -43,14 +43,20 @@ and the page author, not the model, decides which capabilities exist at all.
 Three properties fall out of that, and all three matter more for financial
 software than for a shopping demo:
 
-**The privacy boundary is code, not a prompt.** Jem Unlocked is one app serving
-two people with opposed information rights. Nomsa is saving for school fees.
-Sipho runs workforce programmes at her employer. Employer tools are wired to a
-capability layer that structurally cannot produce a private employee field —
-goal, saved amount, target, monthly contribution, privacy choice or expenses.
-No system prompt is asking the model to behave. We hold that boundary with
-privacy sentinel tests that assert every employer tool and DTO against the
-private field set, so the build fails if someone widens a projection.
+**The tool surface itself is the privacy boundary.** Jem Unlocked is one app
+serving two people with opposed information rights. Nomsa is saving for school
+fees. Sipho runs workforce programmes at her employer. Tool registration
+follows the mode on screen: while the Employer Hub is open, no employee-private
+tool is registered, so `document.modelContext` has nothing that can read
+Nomsa's savings goal. There is no prompt you could write to get it, because
+there is no tool to call.
+
+This is the thing a server-side MCP host cannot do. It does not know what is on
+screen, or who is looking at it; the page does. We back it with a second,
+independent layer — employer tools are wired to a capability layer that cannot
+produce a private employee field at all — and privacy sentinel tests that fail
+the build if anyone widens a projection. Two layers, because one is not enough
+when the data is somebody's money.
 
 **Consequential actions are gated by the page.** Every money-adjacent tool takes
 a required `confirm` boolean. `confirm: false` returns a preview and mutates
@@ -93,9 +99,10 @@ dependency.
 - **"Am I on track?"** The agent reads live dashboard state — not a stale export
   or a scraped screenshot.
 - **"Who is being under-offered shifts?"** Sipho's agent reads anonymised
-  fairness exceptions and drafts a programme against them, while remaining
-  unable to retrieve any individual's private financial data. Two agents, one
-  codebase, asymmetric access — enforced structurally.
+  fairness exceptions and drafts a programme against them — and cannot retrieve
+  any individual's private financial data, because those tools are not
+  registered while the employer view is open. Two people, one codebase,
+  asymmetric access, enforced by the page.
 - **Draft, then validate, then stop.** `create_opportunity_draft` saves a draft
   and `validate_opportunity` analyses it, but nothing in the tool surface can
   launch a programme or move money. The agent takes the work to the point of a
@@ -103,7 +110,10 @@ dependency.
 
 ## How we implemented WebMCP
 
-Twelve tools registered through `document.modelContext.registerTool`, each with:
+Twelve tools defined, registered through `document.modelContext.registerTool`,
+with **six or seven live at a time** — registration is a function of the active
+mode, and switching mode aborts the previous registration's `AbortSignal` to
+unregister that whole set before the next one goes up. Each tool has:
 
 - a **closed input schema** (`additionalProperties: false`) plus a runtime
   validator mirroring that schema, so a malformed agent call returns a
