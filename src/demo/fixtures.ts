@@ -48,6 +48,7 @@ export function createInitialDemoState(): DemoState {
     },
     revision: 1,
     auditEvents: [],
+    proposals: [],
     savingsIntent: null,
     onboarding: { completed: true, step: 1 },
     employee: {

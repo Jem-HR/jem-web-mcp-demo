@@ -1,6 +1,8 @@
 import { createInitialDemoState } from "./fixtures";
 import { policyDecisionForTool, policyForSession } from "./policy";
+import { verifyExecutableProposal } from "./proposals";
 import type {
+  ActionProposal,
   ActionSource,
   ActorId,
   AgentAuditEvent,
@@ -63,11 +65,61 @@ function mutate(
     source,
     changes.actorSession,
   );
+  const proposals = changes.proposals.map((proposal) =>
+    proposal.status === "pending" || proposal.status === "approved"
+      ? { ...proposal, status: "invalidated" as const }
+      : proposal,
+  );
   return {
     ...changes,
+    proposals,
     revision: event.stateRevision,
     auditEvents: [...state.auditEvents, event],
   };
+}
+
+function proposalAuditEvent(
+  state: DemoState,
+  proposal: ActionProposal,
+  type:
+    | "proposal_created"
+    | "proposal_approved"
+    | "proposal_rejected"
+    | "proposal_executed",
+  outcome: AgentAuditEvent["outcome"],
+  source: ActionSource,
+): AgentAuditEvent {
+  const eventSequence = state.auditEvents.length + 1;
+  const summaries = {
+    proposal_created: "Created a guarded action proposal.",
+    proposal_approved: "Approved a guarded action proposal.",
+    proposal_rejected: "Rejected a guarded action proposal.",
+    proposal_executed: "Executed a guarded action proposal.",
+  } as const;
+
+  return {
+    id: `audit-proposal-${eventSequence}`,
+    type,
+    actorId: state.actorSession.actorId,
+    source,
+    action: proposal.action,
+    proposalId: proposal.id,
+    outcome,
+    policyRevision: state.actorSession.policyRevision,
+    stateRevision: state.revision,
+    summary: summaries[type],
+    timestamp: `demo-event-${eventSequence}`,
+  };
+}
+
+function updateProposal(
+  state: DemoState,
+  proposalId: string,
+  update: (proposal: ActionProposal) => ActionProposal,
+): ActionProposal[] {
+  return state.proposals.map((proposal) =>
+    proposal.id === proposalId ? update(proposal) : proposal,
+  );
 }
 
 function toolForAction(action: DemoAction): string | null {
@@ -220,6 +272,7 @@ export function demoReducer(state: DemoState, action: DemoAction): DemoState {
         state,
         {
           ...initial,
+          proposals: state.proposals,
           actorSession: sessionForActor("employee", policyRevision),
           onboarding: { completed: false, step: 1 },
         },
@@ -517,6 +570,120 @@ export function demoReducer(state: DemoState, action: DemoAction): DemoState {
       };
     }
 
+    case "proposal/create": {
+      const { proposal } = action;
+      const decision = policyDecisionForTool(
+        policyForSession(state.actorSession),
+        proposal.action,
+      );
+      if (!decision.permitted)
+        return recordPolicyDenial(state, proposal.action);
+      if (
+        proposal.status !== "pending" ||
+        proposal.actorId !== state.actorSession.actorId ||
+        proposal.policyRevision !== state.actorSession.policyRevision ||
+        proposal.stateRevision !== state.revision ||
+        proposal.expiresAt <= state.revision ||
+        state.proposals.some((existing) => existing.id === proposal.id)
+      ) {
+        return state;
+      }
+
+      const event = proposalAuditEvent(
+        state,
+        proposal,
+        "proposal_created",
+        "recorded",
+        action.source,
+      );
+      return {
+        ...state,
+        proposals: [...state.proposals, proposal],
+        auditEvents: [...state.auditEvents, event],
+      };
+    }
+
+    case "proposal/approve": {
+      const proposal = findProposalById(state.proposals, action.proposalId);
+      if (
+        proposal === undefined ||
+        proposal.status !== "pending" ||
+        proposal.actorId !== state.actorSession.actorId ||
+        proposal.policyRevision !== state.actorSession.policyRevision ||
+        proposal.stateRevision !== state.revision ||
+        state.revision >= proposal.expiresAt
+      ) {
+        return state;
+      }
+
+      const approved = { ...proposal, status: "approved" as const };
+      const event = proposalAuditEvent(
+        state,
+        approved,
+        "proposal_approved",
+        "applied",
+        "ui",
+      );
+      return {
+        ...state,
+        proposals: updateProposal(state, proposal.id, () => approved),
+        auditEvents: [...state.auditEvents, event],
+      };
+    }
+
+    case "proposal/reject": {
+      const proposal = findProposalById(state.proposals, action.proposalId);
+      if (
+        proposal === undefined ||
+        (proposal.status !== "pending" && proposal.status !== "approved")
+      ) {
+        return state;
+      }
+
+      const rejected = { ...proposal, status: "rejected" as const };
+      const event = proposalAuditEvent(
+        state,
+        rejected,
+        "proposal_rejected",
+        "denied",
+        "ui",
+      );
+      return {
+        ...state,
+        proposals: updateProposal(state, proposal.id, () => rejected),
+        auditEvents: [...state.auditEvents, event],
+      };
+    }
+
+    case "proposal/execute": {
+      const result = verifyExecutableProposal(state, action);
+      if (!result.ok) return state;
+
+      const eventSequence = state.auditEvents.length + 1;
+      const executed: ActionProposal = {
+        ...result.data,
+        status: "executed",
+        execution: {
+          actorId: state.actorSession.actorId,
+          policyRevision: state.actorSession.policyRevision,
+          stateRevision: state.revision,
+          executedAt: `demo-event-${eventSequence}`,
+        },
+      };
+      const event = proposalAuditEvent(
+        state,
+        executed,
+        "proposal_executed",
+        "applied",
+        "webmcp",
+      );
+      return {
+        ...state,
+        proposals: updateProposal(state, executed.id, () => executed),
+        auditEvents: [...state.auditEvents, event],
+      };
+    }
+
     case "activity/dismiss":
       return state.activity === null
         ? state
@@ -529,4 +696,11 @@ export function demoReducer(state: DemoState, action: DemoAction): DemoState {
             "ui",
           );
   }
+}
+
+function findProposalById(
+  proposals: readonly ActionProposal[],
+  proposalId: string,
+): ActionProposal | undefined {
+  return proposals.find((proposal) => proposal.id === proposalId);
 }

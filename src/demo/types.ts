@@ -22,6 +22,29 @@ export type EmployeeTab = "overview" | "shifts" | "learn" | "rewards";
 export type EmployerTab = "dashboard" | "opportunity" | "shifts" | "fairness";
 export type OpportunityCategory = "all" | "shift" | "learning" | "reward";
 export type ActionSource = "ui" | "webmcp";
+export type ActionProposalStatus =
+  "pending" | "approved" | "rejected" | "executed" | "expired" | "invalidated";
+
+export interface ActionProposalExecution {
+  actorId: ActorId;
+  policyRevision: StateRevision;
+  stateRevision: StateRevision;
+  executedAt: string;
+}
+
+export interface ActionProposal {
+  id: string;
+  action: string;
+  actorId: ActorId;
+  policyRevision: StateRevision;
+  inputFingerprint: string;
+  stateRevision: StateRevision;
+  expiresAt: StateRevision;
+  warnings: string[];
+  effects: string[];
+  status: ActionProposalStatus;
+  execution?: ActionProposalExecution;
+}
 
 /** Simulated client-only actor data; production identity belongs on a server. */
 export interface ActorSession {
@@ -213,6 +236,7 @@ export interface DemoState {
   actorSession: ActorSession;
   revision: StateRevision;
   auditEvents: AgentAuditEvent[];
+  proposals: ActionProposal[];
   savingsIntent: null;
   onboarding: { completed: boolean; step: 1 | 2 | 3 | 4 };
   employee: {
@@ -282,5 +306,18 @@ export type DemoAction =
   | {
       type: "audit/record";
       eventType: AgentAuditEventType;
+    }
+  | {
+      type: "proposal/create";
+      proposal: ActionProposal;
+      source: ActionSource;
+    }
+  | { type: "proposal/approve"; proposalId: string }
+  | { type: "proposal/reject"; proposalId: string }
+  | {
+      type: "proposal/execute";
+      proposalId: string;
+      action: string;
+      input: unknown;
     }
   | { type: "activity/dismiss" };
